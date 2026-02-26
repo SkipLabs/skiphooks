@@ -1,0 +1,54 @@
+export type EventType = "pull_request" | "issues" | "push" | "release";
+
+export interface RouteConfig {
+  groupId: string;
+}
+
+export interface SkiphooksConfig {
+  github: {
+    webhookSecret: string;
+  };
+  slashwork: {
+    graphqlUrl: string;
+    appToken: string;
+  };
+  routes: Partial<Record<EventType, RouteConfig>>;
+}
+
+export function loadConfig(): SkiphooksConfig {
+  // Dynamic import of the user config at project root
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require("../config.ts");
+  const config: SkiphooksConfig = mod.default ?? mod;
+
+  if (!config.github?.webhookSecret) {
+    throw new Error("config: github.webhookSecret is required");
+  }
+  if (!config.slashwork?.graphqlUrl) {
+    throw new Error("config: slashwork.graphqlUrl is required");
+  }
+  if (!config.slashwork?.appToken) {
+    throw new Error("config: slashwork.appToken is required");
+  }
+  if (!config.routes || Object.keys(config.routes).length === 0) {
+    throw new Error("config: at least one route must be configured");
+  }
+
+  const validEvents: EventType[] = [
+    "pull_request",
+    "issues",
+    "push",
+    "release",
+  ];
+  for (const key of Object.keys(config.routes)) {
+    if (!validEvents.includes(key as EventType)) {
+      throw new Error(`config: unknown event type "${key}"`);
+    }
+    const route = config.routes[key as EventType];
+    if (!route?.groupId) {
+      throw new Error(`config: routes.${key}.groupId is required`);
+    }
+  }
+
+  return config;
+}

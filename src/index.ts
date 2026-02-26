@@ -1,10 +1,26 @@
-import { verifySignature, getWebhookSecret } from "./webhook.ts";
-import { formatPREvent, isRelevantAction } from "./formatter.ts";
-import { getSlashworkConfig, postToSlashwork } from "./slashwork.ts";
+import { loadConfig, type EventType } from "./config.ts";
+import { verifySignature } from "./webhook.ts";
+import { postToSlashwork, type SlashworkConnection } from "./slashwork.ts";
+import type { EventHandler } from "./handlers/types.ts";
+import { pullRequestHandler } from "./handlers/pull-request.ts";
+import { issuesHandler } from "./handlers/issues.ts";
+import { pushHandler } from "./handlers/push.ts";
+import { releaseHandler } from "./handlers/release.ts";
 
+const config = loadConfig();
 const port = parseInt(process.env.PORT || "3000", 10);
-const webhookSecret = getWebhookSecret();
-const slashworkConfig = getSlashworkConfig();
+
+const connection: SlashworkConnection = {
+  graphqlUrl: config.slashwork.graphqlUrl,
+  appToken: config.slashwork.appToken,
+};
+
+const handlers: Record<EventType, EventHandler> = {
+  pull_request: pullRequestHandler,
+  issues: issuesHandler,
+  push: pushHandler,
+  release: releaseHandler,
+};
 
 function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
@@ -23,18 +39,30 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   const signature = req.headers.get("x-hub-signature-256");
-  if (!verifySignature(body, signature, webhookSecret)) {
+  if (!verifySignature(body, signature, config.github.webhookSecret)) {
     log("warn", "Invalid webhook signature");
     return new Response("Invalid signature", { status: 401 });
   }
 
-  const event = req.headers.get("x-github-event");
-  if (event !== "pull_request") {
-    log("info", `Ignoring event: ${event}`);
+  const eventType = req.headers.get("x-github-event") as EventType | null;
+  if (!eventType) {
+    log("info", "Missing x-github-event header");
     return new Response("OK");
   }
 
-  let payload: { action: string; pull_request: unknown };
+  const route = config.routes[eventType];
+  if (!route) {
+    log("info", `No route configured for event: ${eventType}`);
+    return new Response("OK");
+  }
+
+  const handler = handlers[eventType];
+  if (!handler) {
+    log("info", `No handler for event: ${eventType}`);
+    return new Response("OK");
+  }
+
+  let payload: { action?: string };
   try {
     payload = JSON.parse(body);
   } catch {
@@ -42,23 +70,19 @@ async function handleWebhook(req: Request): Promise<Response> {
     return new Response("OK");
   }
 
-  const { action } = payload;
-  if (!isRelevantAction(action)) {
-    log("info", `Ignoring PR action: ${action}`);
+  if (!handler.isRelevantAction(payload.action)) {
+    log("info", `Ignoring ${eventType} action: ${payload.action}`);
     return new Response("OK");
   }
 
   try {
-    const markdown = formatPREvent(
-      payload as Parameters<typeof formatPREvent>[0],
-    );
-    await postToSlashwork(slashworkConfig, markdown);
-    log("info", `Posted PR event: ${action}`);
+    const { markdown } = handler.format(payload);
+    await postToSlashwork(connection, route.groupId, markdown);
+    log("info", `Posted ${eventType} event: ${payload.action ?? "n/a"}`);
   } catch (err) {
     log("error", `Failed to post to Slashwork: ${err}`);
   }
 
-  // Always return 200 to GitHub to avoid retries
   return new Response("OK");
 }
 

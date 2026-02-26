@@ -13,11 +13,3 @@ export function verifySignature(
 
   return timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
 }
-
-export function getWebhookSecret(): string {
-  const secret = process.env.GITHUB_WEBHOOK_SECRET;
-  if (!secret) {
-    throw new Error("Missing required env var: GITHUB_WEBHOOK_SECRET");
-  }
-  return secret;
-}
