@@ -91,7 +91,7 @@ Bun.serve({
   fetch(req) {
     const url = new URL(req.url);
 
-    if (url.pathname === "/health") {
+    if (url.pathname === "/" || url.pathname === "/health") {
       return new Response("OK");
     }
 
