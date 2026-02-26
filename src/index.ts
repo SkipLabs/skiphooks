@@ -12,7 +12,7 @@ const port = parseInt(process.env.PORT || "3000", 10);
 
 const connection: SlashworkConnection = {
   graphqlUrl: config.slashwork.graphqlUrl,
-  appToken: config.slashwork.appToken,
+  accessToken: config.slashwork.accessToken,
 };
 
 const handlers: Record<EventType, EventHandler> = {

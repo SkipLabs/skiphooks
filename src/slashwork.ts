@@ -8,7 +8,7 @@ const CREATE_POST_MUTATION = `
 
 export interface SlashworkConnection {
   graphqlUrl: string;
-  appToken: string;
+  accessToken: string;
 }
 
 export async function postToSlashwork(
@@ -20,7 +20,7 @@ export async function postToSlashwork(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${connection.appToken}`,
+      Authorization: `Bearer ${connection.accessToken}`,
     },
     body: JSON.stringify({
       query: CREATE_POST_MUTATION,

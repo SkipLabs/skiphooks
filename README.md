@@ -46,7 +46,7 @@ const config: SkiphooksConfig = {
   },
   slashwork: {
     graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
-    appToken: process.env.SLASHWORK_APP_TOKEN!,
+    accessToken: process.env.SLASHWORK_ACCESS_TOKEN!,
   },
   routes: {
     pull_request: { groupId: "group-abc-123" },
@@ -67,7 +67,7 @@ export default config;
 See the [Slashwork Developer docs](https://slashwork.com/developer) for full details.
 
 1. Create a **stream** (or use an existing one) where notifications will be posted.
-2. Create an **application** with a dedicated access token — this goes in `SLASHWORK_APP_TOKEN`.
+2. Create an **application** with a dedicated access token — this goes in `SLASHWORK_ACCESS_TOKEN`.
 3. Find the **group ID** of your target stream(s) from their URLs — these go in `config.ts` routes.
 4. Set `SLASHWORK_GRAPHQL_URL` to `https://<your-instance>.slashwork.com/graphql`.
 5. You can test queries interactively at `https://<your-instance>.slashwork.com/graphiql`.
@@ -108,7 +108,7 @@ Create a new Web Service with Bun runtime and configure the env vars in the dash
 
 ```sh
 fly launch
-fly secrets set SLASHWORK_GRAPHQL_URL=... SLASHWORK_APP_TOKEN=... GITHUB_WEBHOOK_SECRET=...
+fly secrets set SLASHWORK_GRAPHQL_URL=... SLASHWORK_ACCESS_TOKEN=... GITHUB_WEBHOOK_SECRET=...
 fly deploy
 ```
 
@@ -116,6 +116,6 @@ fly deploy
 
 - **Signature mismatch (401):** Ensure `GITHUB_WEBHOOK_SECRET` matches exactly between GitHub and your `.env`. Check for trailing whitespace.
 - **Posts not appearing:** Verify group IDs in `config.ts` point to valid streams. Check server logs for GraphQL errors.
-- **Token issues:** Ensure `SLASHWORK_APP_TOKEN` has write permissions to the target groups.
+- **Token issues:** Ensure `SLASHWORK_ACCESS_TOKEN` has write permissions to the target groups.
 - **No events received:** Confirm the webhook is active in GitHub (Settings → Webhooks) and the desired events are selected.
 - **Event ignored:** Check that the event type has a route in `config.ts` and the action is one of the supported actions listed above.

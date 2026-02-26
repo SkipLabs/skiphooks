@@ -6,7 +6,7 @@ const config: SkiphooksConfig = {
   },
   slashwork: {
     graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
-    appToken: process.env.SLASHWORK_APP_TOKEN!,
+    accessToken: process.env.SLASHWORK_ACCESS_TOKEN!,
   },
   routes: {
     pull_request: { groupId: "group-abc-123" },
