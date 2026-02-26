@@ -1,6 +1,6 @@
 const CREATE_POST_MUTATION = `
-  mutation CreatePRPost($groupId: ID!, $markdown: String!) {
-    createPost(input: { groupId: $groupId, markdown: $markdown }) {
+  mutation CreatePost($groupId: ID!, $markdown: String!) {
+    createPost(groupId: $groupId, input: { markdown: $markdown }) {
       node { id }
     }
   }
