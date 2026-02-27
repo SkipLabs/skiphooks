@@ -1,4 +1,4 @@
-export type EventType = "pull_request" | "issues" | "push" | "release";
+export type EventType = "pull_request" | "issues" | "issue_comment" | "push" | "release";
 
 export interface RouteConfig {
   groupId: string;

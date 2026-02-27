@@ -1,6 +1,7 @@
 import { test, expect } from "bun:test";
 import { pullRequestHandler } from "./pull-request.ts";
 import { issuesHandler } from "./issues.ts";
+import { issueCommentHandler } from "./issue-comment.ts";
 import { pushHandler } from "./push.ts";
 import { releaseHandler } from "./release.ts";
 
@@ -103,6 +104,76 @@ test("issuesHandler: includes label when labeled", () => {
   });
 
   expect(markdown).toContain("`bug`");
+});
+
+// Issue Comment handler
+
+test("issueCommentHandler: filters irrelevant actions", () => {
+  expect(issueCommentHandler.isRelevantAction("created")).toBe(true);
+  expect(issueCommentHandler.isRelevantAction("edited")).toBe(false);
+  expect(issueCommentHandler.isRelevantAction("deleted")).toBe(false);
+  expect(issueCommentHandler.isRelevantAction(undefined)).toBe(false);
+});
+
+test("issueCommentHandler: formats comment on issue", () => {
+  const { markdown } = issueCommentHandler.format({
+    action: "created",
+    comment: {
+      html_url: "https://github.com/org/repo/issues/10#issuecomment-1",
+      body: "Looks good to me!",
+      user: { login: "alice" },
+    },
+    issue: {
+      number: 10,
+      title: "Bug report",
+      html_url: "https://github.com/org/repo/issues/10",
+    },
+    repository: { full_name: "org/repo" },
+  });
+
+  expect(markdown).toContain("alice");
+  expect(markdown).toContain("Issue #10");
+  expect(markdown).toContain("Bug report");
+  expect(markdown).toContain("Looks good to me!");
+});
+
+test("issueCommentHandler: shows PR for pull request comments", () => {
+  const { markdown } = issueCommentHandler.format({
+    action: "created",
+    comment: {
+      html_url: "https://github.com/org/repo/pull/5#issuecomment-1",
+      body: "LGTM",
+      user: { login: "bob" },
+    },
+    issue: {
+      number: 5,
+      title: "Add feature",
+      html_url: "https://github.com/org/repo/pull/5",
+      pull_request: { url: "https://api.github.com/repos/org/repo/pulls/5" },
+    },
+    repository: { full_name: "org/repo" },
+  });
+
+  expect(markdown).toContain("PR #5");
+  expect(markdown).not.toContain("Issue #5");
+});
+
+test("issueCommentHandler: truncates long comment body", () => {
+  const { markdown } = issueCommentHandler.format({
+    action: "created",
+    comment: {
+      html_url: "#",
+      body: "x".repeat(300),
+      user: { login: "alice" },
+    },
+    issue: {
+      number: 1,
+      title: "Test",
+      html_url: "#",
+    },
+  });
+
+  expect(markdown).toContain("…");
 });
 
 // Push handler

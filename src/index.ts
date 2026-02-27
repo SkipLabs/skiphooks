@@ -5,6 +5,7 @@ import type { EventHandler } from "./handlers/types.ts";
 import { pullRequestHandler } from "./handlers/pull-request.ts";
 import { issuesHandler } from "./handlers/issues.ts";
 import { pushHandler } from "./handlers/push.ts";
+import { issueCommentHandler } from "./handlers/issue-comment.ts";
 import { releaseHandler } from "./handlers/release.ts";
 
 const config = loadConfig();
@@ -18,6 +19,7 @@ const connection: SlashworkConnection = {
 const handlers: Record<EventType, EventHandler> = {
   pull_request: pullRequestHandler,
   issues: issuesHandler,
+  issue_comment: issueCommentHandler,
   push: pushHandler,
   release: releaseHandler,
 };
