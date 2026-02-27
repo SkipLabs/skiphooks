@@ -29,7 +29,7 @@ const config: SkiphooksConfig = {
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
     },
     skjs_stream: {
-      streamId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+      streamId: "g_ekf0qeZiciWhPKidOUJNzt",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
     },
   },
