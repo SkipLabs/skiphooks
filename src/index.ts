@@ -11,11 +11,20 @@ import { releaseHandler } from "./handlers/release.ts";
 const config = loadConfig();
 const port = parseInt(process.env.PORT || "3000", 10);
 
-function connectionForRoute(routeName: string): SlashworkConnection {
+function resolveRoute(routeName: string): { targetId: string; authToken: string } {
   const route = config.routes[routeName]!;
+  if ("group" in route) {
+    const group = config.groups![route.group]!;
+    return { targetId: group.id, authToken: group.authToken };
+  }
+  return { targetId: route.streamId, authToken: route.authToken };
+}
+
+function connectionForRoute(routeName: string): SlashworkConnection {
+  const { authToken } = resolveRoute(routeName);
   return {
     graphqlUrl: config.slashwork.graphqlUrl,
-    authToken: route.authToken,
+    authToken,
   };
 }
 
@@ -32,7 +41,7 @@ function log(level: string, message: string) {
 }
 
 async function handleWebhook(req: Request, routeName: string): Promise<Response> {
-  const route = config.routes[routeName]!;
+  const { targetId } = resolveRoute(routeName);
   const connection = connectionForRoute(routeName);
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
@@ -47,7 +56,7 @@ async function handleWebhook(req: Request, routeName: string): Promise<Response>
 
   const signature = req.headers.get("x-hub-signature-256");
   if (!verifySignature(body, signature, config.github.webhookSecret)) {
-    log("warn", "Invalid webhook signature");
+    log("warn", `Invalid webhook signature for route "${routeName}" (signature: ${signature ? `"${signature.slice(0, 20)}..."` : "missing"}, body length: ${body.length})`);
     return new Response("Invalid signature", { status: 401 });
   }
 
@@ -81,7 +90,7 @@ async function handleWebhook(req: Request, routeName: string): Promise<Response>
 
   try {
     const { markdown } = handler.format(payload);
-    await postToSlashwork(connection, route.groupId, markdown);
+    await postToSlashwork(connection, targetId, markdown);
     log("info", `Posted ${eventType} event: ${payload.action ?? "n/a"}`);
   } catch (err) {
     log("error", `Failed to post to Slashwork: ${err}`);

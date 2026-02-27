@@ -7,13 +7,22 @@ const config: SkiphooksConfig = {
   slashwork: {
     graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
   },
-  routes: {
+  groups: {
     skipper: {
-      groupId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+      id: "https://skiplabs.slashwork.com/stream/g_dUYLNrxW7GzSxQwCKfGGQL",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
     },
-    skjs: {
-      groupId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+  },
+  routes: {
+    skipper: {
+      group: "skipper",
+    },
+    skipper_stream: {
+      streamId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
+    },
+    skjs_stream: {
+      streamId: "g_dUYLNrxW7GzSxQwCKfGGQL",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
     },
   },

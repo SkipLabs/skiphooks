@@ -47,7 +47,7 @@ export async function validateConnection(
 
 export async function postToSlashwork(
   connection: SlashworkConnection,
-  groupId: string,
+  streamId: string,
   markdown: string,
 ): Promise<void> {
   const response = await fetch(connection.graphqlUrl, {
@@ -59,7 +59,7 @@ export async function postToSlashwork(
     body: JSON.stringify({
       query: CREATE_POST_MUTATION,
       variables: {
-        groupId,
+        groupId: streamId,
         markdown,
       },
     }),
