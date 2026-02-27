@@ -17,5 +17,12 @@ jobs:
           CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
           CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
         run: |
-          CREDENTIALS=$(echo -n "${CLEVER_TOKEN}:${CLEVER_SECRET}" | base64)
-          git -c http.extraHeader="Authorization: Basic ${CREDENTIALS}" push https://CLEVER_CLOUD_GIT_URL_REDACTED main:master --force
+          git credential-store --file=/tmp/git-creds store <<EOF
+          protocol=https
+          host=push-n3-par-clevercloud-customers.services.clever-cloud.com
+          username=${CLEVER_TOKEN}
+          password=${CLEVER_SECRET}
+
+          EOF
+          git config credential.helper "store --file=/tmp/git-creds"
+          git push https://CLEVER_CLOUD_GIT_URL_REDACTED main:master --force
