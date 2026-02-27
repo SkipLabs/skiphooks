@@ -17,5 +17,5 @@ jobs:
           CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
           CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
         run: |
-          git remote add clever "https://${CLEVER_TOKEN}:${CLEVER_SECRET}@CLEVER_CLOUD_GIT_URL_REDACTED"
-          git push clever main:master --force
+          CREDENTIALS=$(echo -n "${CLEVER_TOKEN}:${CLEVER_SECRET}" | base64)
+          git -c http.extraHeader="Authorization: Basic ${CREDENTIALS}" push https://CLEVER_CLOUD_GIT_URL_REDACTED main:master --force
