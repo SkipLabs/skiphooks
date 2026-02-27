@@ -12,7 +12,7 @@ export interface SkiphooksConfig {
     graphqlUrl: string;
     authToken: string;
   };
-  routes: Partial<Record<EventType, RouteConfig>>;
+  routes: Record<string, RouteConfig>;
 }
 
 export function loadConfig(): SkiphooksConfig {
@@ -34,19 +34,9 @@ export function loadConfig(): SkiphooksConfig {
     throw new Error("config: at least one route must be configured");
   }
 
-  const validEvents: EventType[] = [
-    "pull_request",
-    "issues",
-    "push",
-    "release",
-  ];
-  for (const key of Object.keys(config.routes)) {
-    if (!validEvents.includes(key as EventType)) {
-      throw new Error(`config: unknown event type "${key}"`);
-    }
-    const route = config.routes[key as EventType];
+  for (const [name, route] of Object.entries(config.routes)) {
     if (!route?.groupId) {
-      throw new Error(`config: routes.${key}.groupId is required`);
+      throw new Error(`config: routes.${name}.groupId is required`);
     }
   }
 

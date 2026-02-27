@@ -26,7 +26,7 @@ function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
 }
 
-async function handleWebhook(req: Request): Promise<Response> {
+async function handleWebhook(req: Request, groupId: string): Promise<Response> {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -47,12 +47,6 @@ async function handleWebhook(req: Request): Promise<Response> {
   const eventType = req.headers.get("x-github-event") as EventType | null;
   if (!eventType) {
     log("info", "Missing x-github-event header");
-    return new Response("OK");
-  }
-
-  const route = config.routes[eventType];
-  if (!route) {
-    log("info", `No route configured for event: ${eventType}`);
     return new Response("OK");
   }
 
@@ -77,7 +71,7 @@ async function handleWebhook(req: Request): Promise<Response> {
 
   try {
     const { markdown } = handler.format(payload);
-    await postToSlashwork(connection, route.groupId, markdown);
+    await postToSlashwork(connection, groupId, markdown);
     log("info", `Posted ${eventType} event: ${payload.action ?? "n/a"}`);
   } catch (err) {
     log("error", `Failed to post to Slashwork: ${err}`);
@@ -95,15 +89,24 @@ Bun.serve({
       return new Response("OK");
     }
 
-    if (url.pathname === "/github-webhook") {
-      return handleWebhook(req);
+    const match = url.pathname.match(/^\/github\/([^/]+)$/);
+    if (match) {
+      const name = match[1];
+      const route = config.routes[name];
+      if (!route) {
+        log("warn", `No route configured for: ${name}`);
+        return new Response("Not found", { status: 404 });
+      }
+      return handleWebhook(req, route.groupId);
     }
 
     return new Response("Not found", { status: 404 });
   },
 });
 
+const routeNames = Object.keys(config.routes);
 log("info", `Server running on port ${port}`);
+log("info", `Routes: ${routeNames.map(n => `/github/${n}`).join(", ")}`);
 log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
 log("info", `Auth token loaded: ${config.slashwork.authToken.slice(0, 8)}...`);
 
