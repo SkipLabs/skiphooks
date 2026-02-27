@@ -9,10 +9,10 @@ const config: SkiphooksConfig = {
     authToken: process.env.SLASHWORK_AUTH_TOKEN!,
   },
   routes: {
-    pull_request: { groupId: "group-abc-123" },
-    issues: { groupId: "group-abc-123" },
-    push: { groupId: "group-abc-123" },
-    release: { groupId: "group-abc-123" },
+    pull_request: { groupId: "g_dUYLNrxW7GzSxQwCKfGGQL" },
+    issues: { groupId: "g_dUYLNrxW7GzSxQwCKfGGQL" },
+    push: { groupId: "g_dUYLNrxW7GzSxQwCKfGGQL" },
+    release: { groupId: "g_dUYLNrxW7GzSxQwCKfGGQL" },
   },
 };
 
