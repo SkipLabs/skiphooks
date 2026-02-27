@@ -1,6 +1,6 @@
 import { loadConfig, type EventType } from "./config.ts";
 import { verifySignature } from "./webhook.ts";
-import { postToSlashwork, type SlashworkConnection } from "./slashwork.ts";
+import { postToSlashwork, validateConnection, type SlashworkConnection } from "./slashwork.ts";
 import type { EventHandler } from "./handlers/types.ts";
 import { pullRequestHandler } from "./handlers/pull-request.ts";
 import { issuesHandler } from "./handlers/issues.ts";
@@ -12,7 +12,7 @@ const port = parseInt(process.env.PORT || "3000", 10);
 
 const connection: SlashworkConnection = {
   graphqlUrl: config.slashwork.graphqlUrl,
-  accessToken: config.slashwork.accessToken,
+  authToken: config.slashwork.authToken,
 };
 
 const handlers: Record<EventType, EventHandler> = {
@@ -105,4 +105,9 @@ Bun.serve({
 
 log("info", `Server running on port ${port}`);
 log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
-log("info", `Access token loaded: ${config.slashwork.accessToken.slice(0, 8)}...`);
+log("info", `Auth token loaded: ${config.slashwork.authToken.slice(0, 8)}...`);
+
+validateConnection(connection).then(
+  () => log("info", "Slashwork auth validated"),
+  (err) => log("error", `${err}`),
+);

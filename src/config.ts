@@ -10,7 +10,7 @@ export interface SkiphooksConfig {
   };
   slashwork: {
     graphqlUrl: string;
-    accessToken: string;
+    authToken: string;
   };
   routes: Partial<Record<EventType, RouteConfig>>;
 }
@@ -27,8 +27,8 @@ export function loadConfig(): SkiphooksConfig {
   if (!config.slashwork?.graphqlUrl) {
     throw new Error("config: slashwork.graphqlUrl is required");
   }
-  if (!config.slashwork?.accessToken) {
-    throw new Error("config: slashwork.accessToken is required");
+  if (!config.slashwork?.authToken) {
+    throw new Error("config: slashwork.authToken is required");
   }
   if (!config.routes || Object.keys(config.routes).length === 0) {
     throw new Error("config: at least one route must be configured");
