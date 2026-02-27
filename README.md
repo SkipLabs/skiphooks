@@ -8,6 +8,7 @@ A GitHub webhook server that posts repository events to Slashwork via their Grap
 |---|---|
 | `pull_request` | opened, closed/merged, review_requested, ready_for_review, synchronize |
 | `issues` | opened, closed, reopened, labeled, assigned |
+| `issue_comment` | created |
 | `push` | all pushes (no action filter) |
 | `release` | published, created, edited |
 
@@ -35,7 +36,7 @@ cp .env.example .env
 
 ## Configuration
 
-Event routing is configured in `config.ts` at the project root. Each event type maps to a Slashwork group ID:
+Event routing is configured in `config.ts` at the project root:
 
 ```ts
 import type { SkiphooksConfig } from "./src/config.ts";
@@ -46,11 +47,21 @@ const config: SkiphooksConfig = {
   },
   slashwork: {
     graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
-    authToken: process.env.SLASHWORK_AUTH_TOKEN!,
+  },
+  groups: {
+    myproject: {
+      id: "g_abc123",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_MYPROJECT!,
+    },
   },
   routes: {
-    "my-project": { groupId: "group-abc-123" },
-    "releases":   { groupId: "group-def-456" },
+    // Group-based route — references a named group for its ID and auth token
+    myproject: { group: "myproject" },
+    // Direct stream route — specifies stream ID and auth token inline
+    releases: {
+      streamId: "g_def456",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_RELEASES!,
+    },
   },
 };
 
@@ -59,14 +70,15 @@ export default config;
 
 - **Secrets** stay in `.env` and are referenced via `process.env`.
 - **Routes** are path-based — each route name becomes a `/github/<name>` endpoint. Only configured routes are active — requests to unknown routes return 404.
+- **Groups** let multiple routes share the same auth token and target ID. Routes can reference a group by name or specify `streamId`/`authToken` directly.
 
 ## Slashwork Configuration
 
 See the [Slashwork Developer docs](https://slashwork.com/developer) for full details.
 
 1. Create a **stream** (or use an existing one) where notifications will be posted.
-2. Create an **application** with a dedicated auth token — this goes in `SLASHWORK_AUTH_TOKEN`.
-3. Find the **group ID** of your target stream(s) from their URLs — these go in `config.ts` routes.
+2. Create an **application** with a dedicated auth token — this goes in a `SLASHWORK_AUTH_TOKEN_*` env var.
+3. Find the **group ID** of your target stream(s) from their URLs — these go in `config.ts` groups or routes.
 4. Set `SLASHWORK_GRAPHQL_URL` to `https://<your-instance>.slashwork.com/api/graphql`.
 
 ## GitHub Webhook Setup
@@ -109,6 +121,6 @@ Deployed to [Clever Cloud](https://clever-cloud.com) via GitHub Actions. Every p
 
 - **Signature mismatch (401):** Ensure `GITHUB_WEBHOOK_SECRET` matches exactly between GitHub and your `.env`. Check for trailing whitespace.
 - **Posts not appearing:** Verify group IDs in `config.ts` point to valid streams. Check server logs for GraphQL errors.
-- **Token issues:** Ensure `SLASHWORK_AUTH_TOKEN` has write permissions to the target groups.
+- **Token issues:** Ensure your `SLASHWORK_AUTH_TOKEN_*` env vars have write permissions to the target groups.
 - **No events received:** Confirm the webhook is active in GitHub (Settings → Webhooks) and the desired events are selected.
 - **Event ignored:** Check that the route exists in `config.ts` and the action is one of the supported actions listed above.
