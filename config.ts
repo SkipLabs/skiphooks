@@ -12,10 +12,17 @@ const config: SkiphooksConfig = {
       id: "g_aVypv5BKvHiKP3tikjHjtj",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
     },
+    skjs: {
+      id: "g_d_Px84GPeIF977BNqP0fGn",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
+    },
   },
   routes: {
     skipper: {
       group: "skipper",
+    },
+    skjs: {
+      group: "skjs",
     },
     skipper_stream: {
       streamId: "g_dUYLNrxW7GzSxQwCKfGGQL",
