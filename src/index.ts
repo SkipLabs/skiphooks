@@ -11,10 +11,13 @@ import { releaseHandler } from "./handlers/release.ts";
 const config = loadConfig();
 const port = parseInt(process.env.PORT || "3000", 10);
 
-const connection: SlashworkConnection = {
-  graphqlUrl: config.slashwork.graphqlUrl,
-  authToken: config.slashwork.authToken,
-};
+function connectionForRoute(routeName: string): SlashworkConnection {
+  const route = config.routes[routeName]!;
+  return {
+    graphqlUrl: config.slashwork.graphqlUrl,
+    authToken: route.authToken,
+  };
+}
 
 const handlers: Record<EventType, EventHandler> = {
   pull_request: pullRequestHandler,
@@ -28,7 +31,9 @@ function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
 }
 
-async function handleWebhook(req: Request, groupId: string): Promise<Response> {
+async function handleWebhook(req: Request, routeName: string): Promise<Response> {
+  const route = config.routes[routeName]!;
+  const connection = connectionForRoute(routeName);
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
@@ -76,7 +81,7 @@ async function handleWebhook(req: Request, groupId: string): Promise<Response> {
 
   try {
     const { markdown } = handler.format(payload);
-    await postToSlashwork(connection, groupId, markdown);
+    await postToSlashwork(connection, route.groupId, markdown);
     log("info", `Posted ${eventType} event: ${payload.action ?? "n/a"}`);
   } catch (err) {
     log("error", `Failed to post to Slashwork: ${err}`);
@@ -102,7 +107,7 @@ Bun.serve({
         log("warn", `No route configured for: ${name}`);
         return new Response("Not found", { status: 404 });
       }
-      return handleWebhook(req, route.groupId);
+      return handleWebhook(req, name);
     }
 
     return new Response("Not found", { status: 404 });
@@ -113,9 +118,12 @@ const routeNames = Object.keys(config.routes);
 log("info", `Server running on port ${port}`);
 log("info", `Routes: ${routeNames.map(n => `/github/${n}`).join(", ")}`);
 log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
-log("info", `Auth token loaded: ${config.slashwork.authToken.slice(0, 8)}...`);
 
-validateConnection(connection).then(
-  () => log("info", "Slashwork auth validated"),
-  (err) => log("error", `${err}`),
-);
+for (const name of routeNames) {
+  const conn = connectionForRoute(name);
+  log("info", `Route ${name}: token ${conn.authToken.slice(0, 8)}...`);
+  validateConnection(conn).then(
+    () => log("info", `Route ${name}: auth validated`),
+    (err) => log("error", `Route ${name}: ${err}`),
+  );
+}

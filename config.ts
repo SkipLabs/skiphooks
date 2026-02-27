@@ -6,10 +6,16 @@ const config: SkiphooksConfig = {
   },
   slashwork: {
     graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
-    authToken: process.env.SLASHWORK_AUTH_TOKEN!,
   },
   routes: {
-    "skipper": { groupId: "g_dUYLNrxW7GzSxQwCKfGGQL" },
+    skipper: {
+      groupId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
+    },
+    skjs: {
+      groupId: "g_dUYLNrxW7GzSxQwCKfGGQL",
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
+    },
   },
 };
 
