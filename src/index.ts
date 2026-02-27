@@ -104,3 +104,5 @@ Bun.serve({
 });
 
 log("info", `Server running on port ${port}`);
+log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
+log("info", `Access token loaded: ${config.slashwork.accessToken.slice(0, 8)}...`);
