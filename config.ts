@@ -9,7 +9,7 @@ const config: SkiphooksConfig = {
   },
   groups: {
     skipper: {
-      id: "https://skiplabs.slashwork.com/stream/g_dUYLNrxW7GzSxQwCKfGGQL",
+      id: "g_aVypv5BKvHiKP3tikjHjtj",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIPPER!,
     },
   },
