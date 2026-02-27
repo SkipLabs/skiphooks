@@ -91,7 +91,7 @@ Bun.serve({
 
     const match = url.pathname.match(/^\/github\/([^/]+)$/);
     if (match) {
-      const name = match[1];
+      const name = match[1]!;
       const route = config.routes[name];
       if (!route) {
         log("warn", `No route configured for: ${name}`);
