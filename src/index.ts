@@ -59,8 +59,8 @@ async function handleWebhook(req: Request, groupId: string): Promise<Response> {
   let payload: { action?: string };
   try {
     payload = JSON.parse(body);
-  } catch {
-    log("error", "Failed to parse webhook payload");
+  } catch (err) {
+    log("error", `Failed to parse ${eventType} payload: ${err}. Body: ${body.slice(0, 200)}`);
     return new Response("OK");
   }
 
