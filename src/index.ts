@@ -79,7 +79,7 @@ async function handleWebhook(req: Request, routeName: string): Promise<Response>
       : body;
     payload = JSON.parse(json);
   } catch (err) {
-    log("error", `Failed to parse ${eventType} payload: ${err}. Body: ${body.slice(0, 200)}`);
+    log("error", `Failed to parse ${eventType} payload: ${err} (body length: ${body.length})`);
     return new Response("OK");
   }
 
@@ -101,10 +101,14 @@ async function handleWebhook(req: Request, routeName: string): Promise<Response>
 
 Bun.serve({
   port,
+  maxRequestBodySize: 1024 * 1024,
   fetch(req) {
     const url = new URL(req.url);
 
     if (url.pathname === "/" || url.pathname === "/health") {
+      if (req.method !== "GET" && req.method !== "HEAD") {
+        return new Response("Method not allowed", { status: 405 });
+      }
       return new Response("OK");
     }
 
@@ -130,7 +134,7 @@ log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
 
 for (const name of routeNames) {
   const conn = connectionForRoute(name);
-  log("info", `Route ${name}: token ${conn.authToken.slice(0, 8)}...`);
+  log("info", `Route ${name}: auth token configured`);
   validateConnection(conn).then(
     () => log("info", `Route ${name}: auth validated`),
     (err) => log("error", `Route ${name}: ${err}`),
