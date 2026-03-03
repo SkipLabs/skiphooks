@@ -31,6 +31,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # IntelliJ based IDEs
 .idea
 
+# Google service account keys
+*.json
+!package.json
+!tsconfig.json
+
 # Finder (MacOS) folder config
 .DS_Store
 

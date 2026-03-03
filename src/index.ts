@@ -7,6 +7,8 @@ import { issuesHandler } from "./handlers/issues.ts";
 import { pushHandler } from "./handlers/push.ts";
 import { issueCommentHandler } from "./handlers/issue-comment.ts";
 import { releaseHandler } from "./handlers/release.ts";
+import { validateCalendarAuth } from "./calendar/auth.ts";
+import { startCalendarPoller } from "./calendar/poller.ts";
 
 const config = loadConfig();
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -138,5 +140,17 @@ for (const name of routeNames) {
   validateConnection(conn).then(
     () => log("info", `Route ${name}: auth validated`),
     (err) => log("error", `Route ${name}: ${err}`),
+  );
+}
+
+if (config.calendar) {
+  const cal = config.calendar;
+
+  validateCalendarAuth(cal.serviceAccountKey).then(
+    () => {
+      log("info", "Calendar: Google auth validated");
+      startCalendarPoller(cal, config.slashwork.graphqlUrl, log);
+    },
+    (err) => log("error", `Calendar: auth failed — ${err}`),
   );
 }

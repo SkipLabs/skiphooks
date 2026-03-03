@@ -16,6 +16,20 @@ export interface GroupConfig {
   authToken: string;
 }
 
+export interface CalendarUserConfig {
+  name: string;
+  calendarId: string;
+  targetId: string;
+}
+
+export interface CalendarConfig {
+  serviceAccountKey: string;
+  authToken: string;
+  users: CalendarUserConfig[];
+  pollIntervalMs?: number;
+  reminderLeadTimeMs?: number;
+}
+
 export interface SkiphooksConfig {
   github: {
     webhookSecret: string;
@@ -25,6 +39,7 @@ export interface SkiphooksConfig {
   };
   groups?: Record<string, GroupConfig>;
   routes: Record<string, RouteConfig>;
+  calendar?: CalendarConfig;
 }
 
 export function loadConfig(): SkiphooksConfig {
@@ -65,6 +80,30 @@ export function loadConfig(): SkiphooksConfig {
       }
       if (!route?.authToken) {
         throw new Error(`config: routes.${name}.authToken is required`);
+      }
+    }
+  }
+
+  if (config.calendar) {
+    const cal = config.calendar;
+    if (!cal.serviceAccountKey) {
+      throw new Error("config: calendar.serviceAccountKey is required");
+    }
+    if (!cal.authToken) {
+      throw new Error("config: calendar.authToken is required");
+    }
+    if (!cal.users || cal.users.length === 0) {
+      throw new Error("config: calendar.users must have at least one entry");
+    }
+    for (const user of cal.users) {
+      if (!user.name) {
+        throw new Error("config: each calendar user must have a name");
+      }
+      if (!user.calendarId) {
+        throw new Error(`config: calendar user "${user.name}" must have a calendarId`);
+      }
+      if (!user.targetId) {
+        throw new Error(`config: calendar user "${user.name}" must have a targetId`);
       }
     }
   }

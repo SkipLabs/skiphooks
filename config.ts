@@ -17,6 +17,18 @@ const config: SkiphooksConfig = {
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
     },
   },
+  ...(process.env.GOOGLE_SERVICE_ACCOUNT_KEY
+    ? {
+        calendar: {
+          serviceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+          authToken: process.env.SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR!,
+          users: [
+            // Add one entry per user: their calendar → a Slashwork group or chat
+            // { name: "Alice", calendarId: "alice@example.com", targetId: "g_..." },
+          ],
+        },
+      }
+    : {}),
   routes: {
     skipper: {
       group: "skipper",
