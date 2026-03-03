@@ -23,8 +23,7 @@ const config: SkiphooksConfig = {
           serviceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
           authToken: process.env.SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR!,
           users: [
-            // Add one entry per user: their calendar → a Slashwork group or chat
-            // { name: "Alice", calendarId: "alice@example.com", targetId: "g_..." },
+            { name: "Hugo", calendarId: "hugo@skiplabs.io", targetId: "g_cR_HOoSUCphBLt7gktCEyi" },
           ],
         },
       }
