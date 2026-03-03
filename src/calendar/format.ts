@@ -35,10 +35,13 @@ export function formatCalendarReminder(
       ? "starting now"
       : `in ${Math.round(minutesUntilStart)} min`;
 
+  const videoLink = getVideoLink(event);
   const lines: string[] = [];
 
-  // Header
-  if (event.htmlLink) {
+  // Header with video link if available
+  if (videoLink) {
+    lines.push(`**[${title}](${videoLink})** — ${urgency}`);
+  } else if (event.htmlLink) {
     lines.push(`**[${title}](${event.htmlLink})** — ${urgency}`);
   } else {
     lines.push(`**${title}** — ${urgency}`);
@@ -50,12 +53,6 @@ export function formatCalendarReminder(
   // Location
   if (event.location) {
     lines.push(`Location: ${event.location}`);
-  }
-
-  // Video link
-  const videoLink = getVideoLink(event);
-  if (videoLink) {
-    lines.push(`[Join video call](${videoLink})`);
   }
 
   // Description

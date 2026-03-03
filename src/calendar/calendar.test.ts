@@ -29,10 +29,9 @@ test("formatCalendarReminder: includes all fields", () => {
   expect(markdown).toContain("in 5 min");
   expect(markdown).toContain("Engineering");
   expect(markdown).toContain("Conference Room A");
-  expect(markdown).toContain("https://meet.google.com/abc-defg-hij");
-  expect(markdown).toContain("Join video call");
+  expect(markdown).toContain("[Team Standup](https://meet.google.com/abc-defg-hij)");
   expect(markdown).toContain("Daily sync to discuss progress");
-  expect(markdown).toContain("https://calendar.google.com/event?eid=abc123");
+  expect(markdown).not.toContain("https://calendar.google.com/event");
 });
 
 test("formatCalendarReminder: handles missing optional fields", () => {
@@ -50,7 +49,7 @@ test("formatCalendarReminder: handles missing optional fields", () => {
   expect(markdown).toContain("in 3 min");
   expect(markdown).toContain("Work");
   expect(markdown).not.toContain("Location");
-  expect(markdown).not.toContain("Join video call");
+  expect(markdown).not.toContain("meet.google.com");
 });
 
 test("formatCalendarReminder: truncates long description", () => {
@@ -103,8 +102,7 @@ test("formatCalendarReminder: uses conferenceData when no hangoutLink", () => {
 
   const { markdown } = formatCalendarReminder(event, "Cal", 3);
 
-  expect(markdown).toContain("https://zoom.us/j/123456");
-  expect(markdown).toContain("Join video call");
+  expect(markdown).toContain("[Team Standup](https://zoom.us/j/123456)");
 });
 
 // isAllDayEvent tests
