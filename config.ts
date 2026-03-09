@@ -16,6 +16,10 @@ const config: SkiphooksConfig = {
       id: "g_d_Px84GPeIF977BNqP0fGn",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
     },
+    skip: {
+      id: process.env.SLASHWORK_GROUP_ID_SKIP!,
+      authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIP!,
+    },
   },
   ...(process.env.GOOGLE_SERVICE_ACCOUNT_KEY
     ? {
@@ -34,6 +38,9 @@ const config: SkiphooksConfig = {
     },
     skjs: {
       group: "skjs",
+    },
+    skip: {
+      group: "skip",
     },
     skipper_stream: {
       streamId: "g_dUYLNrxW7GzSxQwCKfGGQL",
