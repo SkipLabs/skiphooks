@@ -39,7 +39,7 @@ const config: SkiphooksConfig = {
     skjs: {
       group: "skjs",
     },
-    skip: {
+    skip_stream: {
       group: "skip",
     },
     skipper_stream: {
