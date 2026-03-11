@@ -17,7 +17,7 @@ const config: SkiphooksConfig = {
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKJS!,
     },
     skip: {
-      id: process.env.SLASHWORK_GROUP_ID_SKIP!,
+      id: "g_cQCWnkXg9OvL08OvMC6XKZ",
       authToken: process.env.SLASHWORK_AUTH_TOKEN_SKIP!,
     },
   },
