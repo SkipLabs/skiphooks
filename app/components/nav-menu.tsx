@@ -36,6 +36,13 @@ export default function NavMenu() {
             </svg>
             Config
           </Link>
+          <Link href="/scout" className="nav-link" onClick={() => setOpen(false)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="7" cy="7" r="5.5" />
+              <path d="M11.5 11.5 15 15" />
+            </svg>
+            Reddit Scout
+          </Link>
         </div>
 
         <div className="nav-divider" />

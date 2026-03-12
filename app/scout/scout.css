@@ -1,0 +1,286 @@
+/* Warnings banner */
+.scout-warnings {
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.scout-warnings-title {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #ef4444;
+  margin-bottom: 0.375rem;
+}
+
+.scout-warnings-desc {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.scout-warnings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.scout-warnings-list li {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-text-dim);
+}
+
+.scout-warnings-list code {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 0.0625rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.6875rem;
+}
+
+/* Stats bar */
+.scout-stats {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.scout-stat {
+  flex: 1;
+  background: var(--cfg-surface);
+  border: 1px solid var(--cfg-border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.scout-stat-value {
+  font-family: var(--cfg-mono);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--cfg-text);
+}
+
+.scout-stat-value--accent {
+  color: var(--cfg-accent);
+}
+
+.scout-stat-label {
+  font-family: var(--cfg-mono);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cfg-text-dim);
+}
+
+/* Subreddit pill */
+.scout-sub {
+  display: inline-block;
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-amber);
+  background: var(--cfg-amber-dim);
+  padding: 0.0625rem 0.375rem;
+  border-radius: 3px;
+  margin-right: 0.25rem;
+}
+
+/* Thread link */
+.scout-thread-link {
+  color: var(--cfg-text);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.scout-thread-link:hover {
+  color: var(--cfg-accent);
+}
+
+/* Score */
+.scout-score {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-green);
+}
+
+/* Topics */
+.scout-topics {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.scout-topic {
+  font-family: var(--cfg-mono);
+  font-size: 0.625rem;
+  color: var(--cfg-text-muted);
+  background: var(--cfg-bg);
+  padding: 0.0625rem 0.3rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.scout-thread-title {
+  font-size: 0.75rem;
+  color: var(--cfg-text-muted);
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badges */
+.scout-badge--done {
+  background: var(--cfg-green-dim);
+  color: var(--cfg-green);
+}
+
+.scout-badge--running {
+  background: var(--cfg-accent-dim);
+  color: var(--cfg-accent);
+}
+
+.scout-badge--error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.scout-badge--high {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+.scout-badge--medium {
+  background: var(--cfg-amber-dim);
+  color: var(--cfg-amber);
+}
+
+.scout-badge--low {
+  background: var(--cfg-green-dim);
+  color: var(--cfg-green);
+}
+
+/* Config form */
+.scout-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem 0;
+}
+
+.scout-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.scout-config-field label {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cfg-text-dim);
+}
+
+.scout-config-field input,
+.scout-config-field textarea {
+  font-family: var(--cfg-mono);
+  font-size: 0.8125rem;
+  color: var(--cfg-text);
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: 4px;
+  padding: 0.5rem 0.625rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+  resize: vertical;
+}
+
+.scout-config-field input:focus,
+.scout-config-field textarea:focus {
+  border-color: var(--cfg-accent);
+}
+
+.scout-config-field input[type="number"] {
+  max-width: 10rem;
+}
+
+.scout-config-hint {
+  font-family: var(--cfg-mono);
+  font-size: 0.625rem;
+  color: var(--cfg-text-dim);
+}
+
+.scout-config-row {
+  display: flex;
+  gap: 1rem;
+}
+
+.scout-config-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.scout-config-submit {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cfg-bg);
+  background: var(--cfg-accent);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.scout-config-submit:hover {
+  opacity: 0.9;
+}
+
+.scout-config-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.scout-config-status {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+}
+
+.scout-config-status--ok {
+  color: var(--cfg-green);
+}
+
+.scout-config-status--err {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .scout-stats {
+    flex-wrap: wrap;
+  }
+
+  .scout-stat {
+    min-width: calc(50% - 0.5rem);
+  }
+
+  .scout-config-row {
+    flex-direction: column;
+  }
+}
