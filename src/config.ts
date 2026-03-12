@@ -43,9 +43,9 @@ export interface SkiphooksConfig {
 }
 
 export function loadConfig(): SkiphooksConfig {
-  // Dynamic import of the user config at project root
+  // Dynamic require to avoid executing config.ts at import time (breaks next build)
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require("../config.ts");
+  const mod = require("../config");
   const config: SkiphooksConfig = mod.default ?? mod;
 
   if (!config.github?.webhookSecret) {

@@ -1,4 +1,4 @@
-import type { CalendarEvent, CalendarEventsResponse } from "./types.ts";
+import type { CalendarEvent, CalendarEventsResponse } from "./types";
 
 export async function fetchUpcomingEvents(
   accessToken: string,

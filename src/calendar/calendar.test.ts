@@ -1,6 +1,6 @@
 import { test, expect } from "bun:test";
-import { formatCalendarReminder, isAllDayEvent, isCancelledEvent } from "./format.ts";
-import type { CalendarEvent } from "./types.ts";
+import { formatCalendarReminder, isAllDayEvent, isCancelledEvent } from "./format";
+import type { CalendarEvent } from "./types";
 
 function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   return {

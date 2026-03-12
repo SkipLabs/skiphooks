@@ -1,5 +1,5 @@
-import type { FormattedEvent } from "../handlers/types.ts";
-import type { CalendarEvent } from "./types.ts";
+import type { FormattedEvent } from "../handlers/types";
+import type { CalendarEvent } from "./types";
 
 const MAX_DESCRIPTION_LENGTH = 200;
 

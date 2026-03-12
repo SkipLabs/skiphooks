@@ -16,11 +16,14 @@ jobs:
 
       - run: bun install
 
+      - name: Build
+        run: bun run build
+
       - name: Typecheck
         run: bun run typecheck
 
       - name: Test
-        run: bun test
+        run: bun test src/
 
   deploy:
     needs: check

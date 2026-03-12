@@ -1,4 +1,4 @@
-import type { EventHandler, FormattedEvent } from "./types.ts";
+import type { EventHandler, FormattedEvent } from "./types";
 
 interface PushPayload {
   ref: string;

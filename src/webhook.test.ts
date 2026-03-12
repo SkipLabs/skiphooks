@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { verifySignature } from "./webhook.ts";
+import { verifySignature } from "./webhook";
 import { createHmac } from "node:crypto";
 
 const SECRET = "test-secret";

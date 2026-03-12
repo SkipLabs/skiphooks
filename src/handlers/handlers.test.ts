@@ -1,9 +1,9 @@
 import { test, expect } from "bun:test";
-import { pullRequestHandler } from "./pull-request.ts";
-import { issuesHandler } from "./issues.ts";
-import { issueCommentHandler } from "./issue-comment.ts";
-import { pushHandler } from "./push.ts";
-import { releaseHandler } from "./release.ts";
+import { pullRequestHandler } from "./pull-request";
+import { issuesHandler } from "./issues";
+import { issueCommentHandler } from "./issue-comment";
+import { pushHandler } from "./push";
+import { releaseHandler } from "./release";
 
 // Pull Request handler
 

@@ -1,4 +1,4 @@
-import type { SkiphooksConfig } from "./src/config.ts";
+import type { SkiphooksConfig } from "./src/config";
 
 const config: SkiphooksConfig = {
   github: {

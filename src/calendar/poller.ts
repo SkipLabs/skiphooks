@@ -1,8 +1,8 @@
-import { getAccessToken } from "./auth.ts";
-import { fetchUpcomingEvents } from "./fetch-events.ts";
-import { formatCalendarReminder, isAllDayEvent, isCancelledEvent } from "./format.ts";
-import { postToSlashwork, type SlashworkConnection } from "../slashwork.ts";
-import type { CalendarConfig } from "../config.ts";
+import { getAccessToken } from "./auth";
+import { fetchUpcomingEvents } from "./fetch-events";
+import { formatCalendarReminder, isAllDayEvent, isCancelledEvent } from "./format";
+import { postToSlashwork, type SlashworkConnection } from "../slashwork";
+import type { CalendarConfig } from "../config";
 
 export interface PollerState {
   interval: ReturnType<typeof setInterval>;

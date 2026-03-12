@@ -1,4 +1,4 @@
-import type { EventHandler, FormattedEvent } from "./types.ts";
+import type { EventHandler, FormattedEvent } from "./types";
 
 const relevantActions = new Set(["created"]);
 
