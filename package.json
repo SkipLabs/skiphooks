@@ -4,8 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "postinstall": "cd web && bun install && bunx next build",
-    "start": "cd web && bunx next start -p 3001 & bun src/index.ts",
+    "postinstall": "cd web && bun install && ./node_modules/.bin/next build",
+    "start": "cd web && ./node_modules/.bin/next start -p 3001 & bun src/index.ts",
     "dev": "bun --watch src/index.ts",
     "dev:web": "cd web && bunx next dev -p 3001",
     "dev:all": "bun run dev & bun run dev:web",
