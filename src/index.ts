@@ -11,7 +11,7 @@ import { validateCalendarAuth } from "./calendar/auth.ts";
 import { startCalendarPoller } from "./calendar/poller.ts";
 
 const config = loadConfig();
-const port = parseInt(process.env.PORT || "3000", 10);
+const port = parseInt(process.env.PORT || "8080", 10);
 const NEXT_PORT = 3001;
 
 async function proxyToNext(req: Request): Promise<Response> {
@@ -118,6 +118,7 @@ async function handleWebhook(req: Request, routeName: string): Promise<Response>
 }
 
 Bun.serve({
+  hostname: "0.0.0.0",
   port,
   maxRequestBodySize: 1024 * 1024,
   fetch(req) {
