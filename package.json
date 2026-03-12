@@ -20,12 +20,14 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "next": "^15",
+    "pg": "^8.20.0",
     "postgres": "^3.4.8",
     "react": "^19",
     "react-dom": "^19",
     "typescript": "^5"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.18.0"
   }
 }
