@@ -35,25 +35,8 @@ export function loadAppConfig(): AppConfig {
     throw new Error("config: SLASHWORK_GRAPHQL_URL is required");
   }
 
-  const config: AppConfig = {
+  return {
     github: { webhookSecret },
     slashwork: { graphqlUrl },
   };
-
-  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
-    const authToken = process.env.SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR;
-    if (!authToken) {
-      throw new Error("config: SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR is required when GOOGLE_SERVICE_ACCOUNT_KEY is set");
-    }
-
-    config.calendar = {
-      serviceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
-      authToken,
-      users: [
-        { name: "Hugo", calendarId: "hugo@skiplabs.io", targetId: "g_cR_HOoSUCphBLt7gktCEyi" },
-      ],
-    };
-  }
-
-  return config;
 }

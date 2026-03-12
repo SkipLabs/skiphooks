@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { loadAppConfig } from "@/src/config";
-import { runMigrations, getAllRoutes } from "@/src/db";
+import { runMigrations, getAllRoutes, getCalendarUsers, getAuthToken } from "@/src/db";
 import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
@@ -36,15 +36,35 @@ export async function register() {
     log("error", `Failed to load routes from DB: ${err}`);
   }
 
-  if (config.calendar) {
-    const cal = config.calendar;
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    try {
+      const calendarAuthToken = await getAuthToken("google_calendar");
+      const calendarUsers = await getCalendarUsers();
 
-    validateCalendarAuth(cal.serviceAccountKey).then(
-      () => {
-        log("info", "Calendar: Google auth validated");
-        startCalendarPoller(cal, config.slashwork.graphqlUrl, log);
-      },
-      (err) => log("error", `Calendar: auth failed — ${err}`),
-    );
+      if (!calendarAuthToken) {
+        log("error", 'Calendar: auth_token "google_calendar" not found in DB');
+        return;
+      }
+      if (calendarUsers.length === 0) {
+        log("warn", "Calendar: no users configured in DB");
+        return;
+      }
+
+      const calendarConfig = {
+        serviceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+        authToken: calendarAuthToken,
+        users: calendarUsers,
+      };
+
+      validateCalendarAuth(calendarConfig.serviceAccountKey).then(
+        () => {
+          log("info", "Calendar: Google auth validated");
+          startCalendarPoller(calendarConfig, config.slashwork.graphqlUrl, log);
+        },
+        (err) => log("error", `Calendar: auth failed — ${err}`),
+      );
+    } catch (err) {
+      log("error", `Calendar: failed to load config from DB: ${err}`);
+    }
   }
 }

@@ -154,6 +154,33 @@ export async function getRoutes(): Promise<DbRouteRow[]> {
   }));
 }
 
+export interface DbCalendarUser {
+  name: string;
+  calendarId: string;
+  targetId: string;
+}
+
+export async function getCalendarUsers(): Promise<DbCalendarUser[]> {
+  const result = await getPool().query<{
+    name: string;
+    calendar_id: string;
+    target_id: string;
+  }>("SELECT name, calendar_id, target_id FROM calendar_users ORDER BY name");
+  return result.rows.map((row) => ({
+    name: row.name,
+    calendarId: row.calendar_id,
+    targetId: row.target_id,
+  }));
+}
+
+export async function getAuthToken(name: string): Promise<string | null> {
+  const result = await getPool().query<{ token: string }>(
+    "SELECT token FROM auth_tokens WHERE name = $1",
+    [name],
+  );
+  return result.rows[0]?.token ?? null;
+}
+
 export async function getAllRoutes(): Promise<DbRoute[]> {
   const result = await getPool().query<{
     name: string;

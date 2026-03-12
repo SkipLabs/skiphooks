@@ -1,4 +1,4 @@
-import { getAuthTokens, getGroups, getRoutes } from "@/src/db";
+import { getAuthTokens, getGroups, getRoutes, getCalendarUsers } from "@/src/db";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +50,11 @@ const streamBadge: React.CSSProperties = {
 };
 
 export default async function ConfigPage() {
-  const [authTokens, groups, routes] = await Promise.all([
+  const [authTokens, groups, routes, calendarUsers] = await Promise.all([
     getAuthTokens(),
     getGroups(),
     getRoutes(),
+    getCalendarUsers(),
   ]);
 
   return (
@@ -147,6 +148,31 @@ export default async function ConfigPage() {
           </tbody>
         </table>
       </div>
+      {calendarUsers.length > 0 && (
+        <div style={section}>
+          <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.75rem" }}>
+            Calendar Users
+          </h2>
+          <table style={table}>
+            <thead>
+              <tr>
+                <th style={th}>Name</th>
+                <th style={th}>Calendar ID</th>
+                <th style={th}>Target ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              {calendarUsers.map((u) => (
+                <tr key={u.name}>
+                  <td style={td}>{u.name}</td>
+                  <td style={{ ...td, ...mono }}>{u.calendarId}</td>
+                  <td style={{ ...td, ...mono }}>{u.targetId}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </main>
   );
 }
