@@ -1,21 +1,5 @@
 export type EventType = "pull_request" | "issues" | "issue_comment" | "push" | "release";
 
-export interface StreamRouteConfig {
-  streamId: string;
-  authToken: string;
-}
-
-export interface GroupRouteConfig {
-  group: string;
-}
-
-export type RouteConfig = StreamRouteConfig | GroupRouteConfig;
-
-export interface GroupConfig {
-  id: string;
-  authToken: string;
-}
-
 export interface CalendarUserConfig {
   name: string;
   calendarId: string;
@@ -30,82 +14,45 @@ export interface CalendarConfig {
   reminderLeadTimeMs?: number;
 }
 
-export interface SkiphooksConfig {
+export interface AppConfig {
   github: {
     webhookSecret: string;
   };
   slashwork: {
     graphqlUrl: string;
   };
-  groups?: Record<string, GroupConfig>;
-  routes: Record<string, RouteConfig>;
   calendar?: CalendarConfig;
 }
 
-export function loadConfig(): SkiphooksConfig {
-  // Dynamic require to avoid executing config.ts at import time (breaks next build)
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require("../config");
-  const config: SkiphooksConfig = mod.default ?? mod;
-
-  if (!config.github?.webhookSecret) {
-    throw new Error("config: github.webhookSecret is required");
-  }
-  if (!config.slashwork?.graphqlUrl) {
-    throw new Error("config: slashwork.graphqlUrl is required");
-  }
-  if (!config.routes || Object.keys(config.routes).length === 0) {
-    throw new Error("config: at least one route must be configured");
+export function loadAppConfig(): AppConfig {
+  const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET;
+  if (!webhookSecret) {
+    throw new Error("config: GITHUB_WEBHOOK_SECRET is required");
   }
 
-  if (config.groups) {
-    for (const [name, group] of Object.entries(config.groups)) {
-      if (!group?.id) {
-        throw new Error(`config: groups.${name}.id is required`);
-      }
-      if (!group?.authToken) {
-        throw new Error(`config: groups.${name}.authToken is required`);
-      }
-    }
+  const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
+  if (!graphqlUrl) {
+    throw new Error("config: SLASHWORK_GRAPHQL_URL is required");
   }
 
-  for (const [name, route] of Object.entries(config.routes)) {
-    if ("group" in route) {
-      if (!config.groups?.[route.group]) {
-        throw new Error(`config: routes.${name}.group references unknown group "${route.group}"`);
-      }
-    } else {
-      if (!route?.streamId) {
-        throw new Error(`config: routes.${name}.streamId is required`);
-      }
-      if (!route?.authToken) {
-        throw new Error(`config: routes.${name}.authToken is required`);
-      }
-    }
-  }
+  const config: AppConfig = {
+    github: { webhookSecret },
+    slashwork: { graphqlUrl },
+  };
 
-  if (config.calendar) {
-    const cal = config.calendar;
-    if (!cal.serviceAccountKey) {
-      throw new Error("config: calendar.serviceAccountKey is required");
+  if (process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    const authToken = process.env.SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR;
+    if (!authToken) {
+      throw new Error("config: SLASHWORK_AUTH_TOKEN_GOOGLE_CALENDAR is required when GOOGLE_SERVICE_ACCOUNT_KEY is set");
     }
-    if (!cal.authToken) {
-      throw new Error("config: calendar.authToken is required");
-    }
-    if (!cal.users || cal.users.length === 0) {
-      throw new Error("config: calendar.users must have at least one entry");
-    }
-    for (const user of cal.users) {
-      if (!user.name) {
-        throw new Error("config: each calendar user must have a name");
-      }
-      if (!user.calendarId) {
-        throw new Error(`config: calendar user "${user.name}" must have a calendarId`);
-      }
-      if (!user.targetId) {
-        throw new Error(`config: calendar user "${user.name}" must have a targetId`);
-      }
-    }
+
+    config.calendar = {
+      serviceAccountKey: process.env.GOOGLE_SERVICE_ACCOUNT_KEY,
+      authToken,
+      users: [
+        { name: "Hugo", calendarId: "hugo@skiplabs.io", targetId: "g_cR_HOoSUCphBLt7gktCEyi" },
+      ],
+    };
   }
 
   return config;

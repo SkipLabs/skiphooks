@@ -1,4 +1,5 @@
-import { loadConfig } from "@/src/config";
+import { loadAppConfig } from "@/src/config";
+import { getAllRoutes } from "@/src/db";
 import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
@@ -8,31 +9,28 @@ function log(level: string, message: string) {
 }
 
 export async function register() {
-  const config = loadConfig();
+  const config = loadAppConfig();
 
-  const routeNames = Object.keys(config.routes);
-  log("info", `Routes: ${routeNames.map((n) => `/github/${n}`).join(", ")}`);
   log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
 
-  for (const name of routeNames) {
-    const route = config.routes[name]!;
-    let authToken: string;
-    if ("group" in route) {
-      authToken = config.groups![route.group]!.authToken;
-    } else {
-      authToken = route.authToken;
+  try {
+    const routes = await getAllRoutes();
+    log("info", `Routes: ${routes.map((r) => `/github/${r.name}`).join(", ")}`);
+
+    for (const route of routes) {
+      const conn: SlashworkConnection = {
+        graphqlUrl: config.slashwork.graphqlUrl,
+        authToken: route.authToken,
+      };
+
+      log("info", `Route ${route.name}: auth token configured`);
+      validateConnection(conn).then(
+        () => log("info", `Route ${route.name}: auth validated`),
+        (err) => log("error", `Route ${route.name}: ${err}`),
+      );
     }
-
-    const conn: SlashworkConnection = {
-      graphqlUrl: config.slashwork.graphqlUrl,
-      authToken,
-    };
-
-    log("info", `Route ${name}: auth token configured`);
-    validateConnection(conn).then(
-      () => log("info", `Route ${name}: auth validated`),
-      (err) => log("error", `Route ${name}: ${err}`),
-    );
+  } catch (err) {
+    log("error", `Failed to load routes from DB: ${err}`);
   }
 
   if (config.calendar) {

@@ -9,14 +9,18 @@
     "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
     "test": "bun test src/",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "db:migrate": "bun scripts/migrate.ts",
+    "db:seed": "bun scripts/setup-db.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.4",
     "@types/node": "^22",
+    "@types/pg": "^8.18.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "next": "^15",
+    "pg": "^8.20.0",
     "react": "^19",
     "react-dom": "^19",
     "typescript": "^5"

@@ -1,4 +1,5 @@
-import { loadConfig, type EventType, type SkiphooksConfig } from "@/src/config";
+import { loadAppConfig, type EventType, type AppConfig } from "@/src/config";
+import { resolveRouteFromDb } from "@/src/db";
 import { verifySignature } from "@/src/webhook";
 import { postToSlashwork, type SlashworkConnection } from "@/src/slashwork";
 import type { EventHandler } from "@/src/handlers/types";
@@ -10,9 +11,9 @@ import { releaseHandler } from "@/src/handlers/release";
 
 export const dynamic = "force-dynamic";
 
-let _config: SkiphooksConfig | null = null;
+let _config: AppConfig | null = null;
 function getConfig() {
-  if (!_config) _config = loadConfig();
+  if (!_config) _config = loadAppConfig();
   return _config;
 }
 
@@ -28,15 +29,6 @@ function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
 }
 
-function resolveRoute(config: SkiphooksConfig, routeName: string): { targetId: string; authToken: string } {
-  const route = config.routes[routeName]!;
-  if ("group" in route) {
-    const group = config.groups![route.group]!;
-    return { targetId: group.id, authToken: group.authToken };
-  }
-  return { targetId: route.streamId, authToken: route.authToken };
-}
-
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ route: string }> },
@@ -44,13 +36,13 @@ export async function POST(
   const config = getConfig();
   const { route: routeName } = await params;
 
-  const route = config.routes[routeName];
-  if (!route) {
+  const resolved = await resolveRouteFromDb(routeName);
+  if (!resolved) {
     log("warn", `No route configured for: ${routeName}`);
     return new Response("Not found", { status: 404 });
   }
 
-  const { targetId, authToken } = resolveRoute(config, routeName);
+  const { targetId, authToken } = resolved;
   const connection: SlashworkConnection = {
     graphqlUrl: config.slashwork.graphqlUrl,
     authToken,
