@@ -47,6 +47,62 @@ export interface DbRoute {
   authToken: string;
 }
 
+export interface DbAuthToken {
+  name: string;
+  tokenPreview: string;
+}
+
+export async function getAuthTokens(): Promise<DbAuthToken[]> {
+  const result = await getPool().query<{ name: string; token: string }>(
+    "SELECT name, token FROM auth_tokens ORDER BY name",
+  );
+  return result.rows.map((row) => ({
+    name: row.name,
+    tokenPreview: row.token.slice(0, 8) + "..." + row.token.slice(-4),
+  }));
+}
+
+export interface DbGroup {
+  name: string;
+  slashworkId: string;
+  authToken: string;
+}
+
+export async function getGroups(): Promise<DbGroup[]> {
+  const result = await getPool().query<{
+    name: string;
+    slashwork_id: string;
+    auth_token: string;
+  }>("SELECT name, slashwork_id, auth_token FROM groups ORDER BY name");
+  return result.rows.map((row) => ({
+    name: row.name,
+    slashworkId: row.slashwork_id,
+    authToken: row.auth_token,
+  }));
+}
+
+export interface DbRouteRow {
+  name: string;
+  groupName: string | null;
+  streamId: string | null;
+  authToken: string | null;
+}
+
+export async function getRoutes(): Promise<DbRouteRow[]> {
+  const result = await getPool().query<{
+    name: string;
+    group_name: string | null;
+    stream_id: string | null;
+    auth_token: string | null;
+  }>("SELECT name, group_name, stream_id, auth_token FROM routes ORDER BY name");
+  return result.rows.map((row) => ({
+    name: row.name,
+    groupName: row.group_name,
+    streamId: row.stream_id,
+    authToken: row.auth_token,
+  }));
+}
+
 export async function getAllRoutes(): Promise<DbRoute[]> {
   const result = await getPool().query<{
     name: string;
