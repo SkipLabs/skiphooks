@@ -34,6 +34,15 @@ export async function POST(
   { params }: { params: Promise<{ route: string }> },
 ) {
   const config = getConfig();
+
+  // Read body immediately — the stream gets locked if we await other async work first
+  let body: string;
+  try {
+    body = await request.text();
+  } catch {
+    return new Response("Bad request", { status: 400 });
+  }
+
   const { route: routeName } = await params;
 
   const resolved = await resolveRouteFromDb(routeName);
@@ -47,13 +56,6 @@ export async function POST(
     graphqlUrl: config.slashwork.graphqlUrl,
     authToken,
   };
-
-  let body: string;
-  try {
-    body = await request.text();
-  } catch {
-    return new Response("Bad request", { status: 400 });
-  }
 
   const signature = request.headers.get("x-hub-signature-256");
   if (!verifySignature(body, signature, config.github.webhookSecret)) {
