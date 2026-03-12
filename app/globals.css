@@ -1,0 +1,20 @@
+:root {
+  --cfg-bg: #0c0c0e;
+  --cfg-surface: #141418;
+  --cfg-surface-hover: #1a1a20;
+  --cfg-border: #27272e;
+  --cfg-border-subtle: #1e1e24;
+  --cfg-text: #e4e4e7;
+  --cfg-text-muted: #71717a;
+  --cfg-text-dim: #52525b;
+  --cfg-accent: #a78bfa;
+  --cfg-accent-dim: rgba(167, 139, 250, 0.12);
+  --cfg-green: #34d399;
+  --cfg-green-dim: rgba(52, 211, 153, 0.12);
+  --cfg-amber: #fbbf24;
+  --cfg-amber-dim: rgba(251, 191, 36, 0.1);
+  --cfg-mono: "SF Mono", "Cascadia Code", "JetBrains Mono", "Fira Code", Menlo,
+    monospace;
+  --cfg-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+}

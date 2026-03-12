@@ -1,0 +1,128 @@
+.nav-burger {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: transparent;
+  border: 1px solid var(--cfg-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-burger:hover {
+  background: var(--cfg-surface-hover);
+  border-color: var(--cfg-text-dim);
+}
+
+.nav-burger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  width: 16px;
+  height: 16px;
+}
+
+.nav-burger-icon span {
+  display: block;
+  width: 16px;
+  height: 1.5px;
+  background: var(--cfg-text-muted);
+  border-radius: 1px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.nav-burger--open .nav-burger-icon span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
+}
+
+.nav-burger--open .nav-burger-icon span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-burger--open .nav-burger-icon span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
+}
+
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.nav-backdrop--visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.nav-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 95;
+  width: 16rem;
+  height: 100vh;
+  background: var(--cfg-surface);
+  border-right: 1px solid var(--cfg-border);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  padding: 4.5rem 0 1.5rem;
+}
+
+.nav-drawer--open {
+  transform: translateX(0);
+}
+
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  padding: 0 0.75rem;
+  gap: 0.25rem;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 5px;
+  font-family: var(--cfg-mono);
+  font-size: 0.8125rem;
+  color: var(--cfg-text-muted);
+  text-decoration: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.nav-link:hover {
+  background: var(--cfg-surface-hover);
+  color: var(--cfg-text);
+}
+
+.nav-link svg {
+  width: 15px;
+  height: 15px;
+  opacity: 0.6;
+}
+
+.nav-divider {
+  height: 1px;
+  background: var(--cfg-border);
+  margin: 0.75rem 0.75rem;
+}
+
+.nav-auth {
+  padding: 0 1.5rem;
+}

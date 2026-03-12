@@ -1,4 +1,6 @@
-import { ClerkProvider, Show, UserButton, SignInButton } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
+import NavMenu from "./components/nav-menu";
+import "./globals.css";
 
 export const metadata = {
   title: "Skiphooks",
@@ -14,24 +16,7 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body style={{ margin: 0, background: "#0c0c0e" }}>
-          <header
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              padding: "0.75rem 1.5rem",
-              position: "fixed",
-              top: 0,
-              right: 0,
-              zIndex: 10,
-            }}
-          >
-            <Show when="signed-out">
-              <SignInButton />
-            </Show>
-            <Show when="signed-in">
-              <UserButton />
-            </Show>
-          </header>
+          <NavMenu />
           {children}
         </body>
       </html>
