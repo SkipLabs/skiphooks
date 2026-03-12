@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.0.4",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
