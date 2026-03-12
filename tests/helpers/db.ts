@@ -12,7 +12,7 @@ export async function setupTestDb(): Promise<postgres.Sql> {
 
   // Run migration 003
   const migrationPath = join(
-    import.meta.dir,
+    import.meta.dirname,
     "../../migrations/003_reddit_scout.sql"
   );
   const migration = readFileSync(migrationPath, "utf-8");
