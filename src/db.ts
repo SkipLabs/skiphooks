@@ -1,4 +1,6 @@
 import pg from "pg";
+import { readdir, readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 let pool: pg.Pool | null = null;
 
@@ -11,6 +13,55 @@ function getPool(): pg.Pool {
     pool = new pg.Pool({ connectionString, max: 5 });
   }
   return pool;
+}
+
+export async function runMigrations(
+  migrationsDir: string,
+  log: (level: string, message: string) => void = () => {},
+): Promise<void> {
+  const db = getPool();
+
+  await db.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+
+  const applied = new Set(
+    (await db.query<{ version: string }>("SELECT version FROM schema_migrations ORDER BY version"))
+      .rows.map((r) => r.version),
+  );
+
+  const files = await readdir(migrationsDir);
+  const pending = files
+    .filter((f) => f.endsWith(".sql"))
+    .sort()
+    .filter((f) => !applied.has(f));
+
+  if (pending.length === 0) {
+    log("info", "Migrations: all up to date");
+    return;
+  }
+
+  for (const filename of pending) {
+    const sql = await readFile(join(migrationsDir, filename), "utf-8");
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(sql);
+      await client.query("INSERT INTO schema_migrations (version) VALUES ($1)", [filename]);
+      await client.query("COMMIT");
+      log("info", `Migrations: applied ${filename}`);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  log("info", `Migrations: applied ${pending.length} migration(s)`);
 }
 
 export interface ResolvedRoute {

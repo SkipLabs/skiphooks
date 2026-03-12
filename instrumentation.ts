@@ -1,5 +1,6 @@
+import { join } from "node:path";
 import { loadAppConfig } from "@/src/config";
-import { getAllRoutes } from "@/src/db";
+import { runMigrations, getAllRoutes } from "@/src/db";
 import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
@@ -10,6 +11,8 @@ function log(level: string, message: string) {
 
 export async function register() {
   const config = loadAppConfig();
+
+  await runMigrations(join(process.cwd(), "migrations"), log);
 
   log("info", `Slashwork URL: ${config.slashwork.graphqlUrl}`);
 
