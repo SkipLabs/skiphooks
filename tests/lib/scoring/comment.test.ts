@@ -3,7 +3,7 @@ import type { CommentTree, RedditComment } from "@/src/types/reddit";
 import type { CommentScore, CommentVerdict, ScoringConfig } from "@/src/types/scoring";
 
 // Mock the Anthropic client before importing the module under test
-const mockCreate = mock(() => Promise.resolve({ content: [] }));
+const mockCreate = mock((_opts?: unknown) => Promise.resolve({ content: [] as Array<{ type: string; text: string }> }));
 mock.module("@/src/lib/scoring/client", () => ({
   getAnthropicClient: () => ({
     messages: { create: mockCreate },
@@ -368,7 +368,7 @@ describe("scoreComments", () => {
 
     await scoreComments(tree, scoringConfig);
 
-    const callArgs = mockCreate.mock.calls[0]![0] as { system: string };
+    const callArgs = (mockCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0] as { system: string };
     expect(callArgs.system).toContain("AI coding tools are frustrating");
     expect(callArgs.system).toContain("code breaks when requirements change");
   });
@@ -381,7 +381,7 @@ describe("scoreComments", () => {
 
     await scoreComments(tree, scoringConfig);
 
-    const callArgs = mockCreate.mock.calls[0]![0] as {
+    const callArgs = (mockCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0] as {
       messages: { content: string }[];
     };
     const userContent = JSON.parse(callArgs.messages[0]!.content);
@@ -402,7 +402,7 @@ describe("scoreComments", () => {
 
     await scoreComments(tree, scoringConfig);
 
-    const callArgs = mockCreate.mock.calls[0]![0] as {
+    const callArgs = (mockCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0] as {
       messages: { content: string }[];
     };
     const userContent = JSON.parse(callArgs.messages[0]!.content);

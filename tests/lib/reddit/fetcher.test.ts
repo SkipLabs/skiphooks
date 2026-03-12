@@ -83,7 +83,7 @@ interface CommentTree {
 // Mock dependencies
 // ---------------------------------------------------------------------------
 
-const mockRedditFetch = mock(() => Promise.resolve([] as unknown[]));
+const mockRedditFetch = mock((_path?: string) => Promise.resolve([] as unknown[]));
 const configMock = makeConfigMock();
 
 mock.module("@/src/lib/reddit/client", () => ({

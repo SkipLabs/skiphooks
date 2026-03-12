@@ -13,7 +13,7 @@ export function makeRepositoryMocks() {
     saveQueueItem: mock(() => Promise.resolve({})),
     saveThreadWithComments: mock(() => Promise.resolve({ thread: {}, comments: [] })),
     commentExists: mock(() => Promise.resolve(false)),
-    getQueue: mock(() => Promise.resolve([])),
+    getQueue: mock((_filter?: Record<string, unknown>) => Promise.resolve([] as unknown[])),
     updateQueueItem: mock(() => Promise.resolve({})),
     createCrawlRun: mock(() => Promise.resolve({})),
     completeCrawlRun: mock(() => Promise.resolve({})),

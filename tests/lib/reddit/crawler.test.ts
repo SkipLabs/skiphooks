@@ -11,7 +11,7 @@ import type { RedditPost } from "@/src/types/reddit";
  */
 
 // Mock dependencies
-const mockRedditFetch = mock(() => Promise.resolve(makeRedditListing([])));
+const mockRedditFetch = mock((_path?: string) => Promise.resolve(makeRedditListing([])) as Promise<unknown>);
 const { config } = makeConfigMock();
 
 // Register complete mocks for modules that other files depend on

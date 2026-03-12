@@ -3,14 +3,14 @@ import type { RedditPost } from "@/src/types/reddit";
 import type { ThreadScore, ScoringConfig } from "@/src/types/scoring";
 
 // Mock the Anthropic client before importing the module under test
-const mockCreate = mock(() =>
+const mockCreate = mock((_opts?: unknown) =>
   Promise.resolve({
     content: [
       {
         type: "text" as const,
         text: "[]",
       },
-    ],
+    ] as Array<{ type: string; text: string }>,
   })
 );
 
@@ -387,7 +387,7 @@ describe("scoreThreadBatch", () => {
     });
 
     await scoreThreadBatch([post], scoringConfig);
-    const call = mockCreate.mock.calls[0]![0] as {
+    const call = (mockCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0] as {
       system: string;
       messages: Array<{ content: string }>;
     };
@@ -403,7 +403,7 @@ describe("scoreThreadBatch", () => {
     });
 
     await scoreThreadBatch([post], scoringConfig);
-    const call = mockCreate.mock.calls[0]![0] as {
+    const call = (mockCreate.mock.calls[0] as unknown as [Record<string, unknown>])[0] as {
       messages: Array<{ content: string }>;
     };
     const userMsg = JSON.parse(call.messages[0]!.content) as Array<{
