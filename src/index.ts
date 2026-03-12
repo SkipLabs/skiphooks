@@ -12,6 +12,22 @@ import { startCalendarPoller } from "./calendar/poller.ts";
 
 const config = loadConfig();
 const port = parseInt(process.env.PORT || "3000", 10);
+const NEXT_PORT = 3001;
+
+async function proxyToNext(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const target = `http://localhost:${NEXT_PORT}${url.pathname}${url.search}`;
+  try {
+    return await fetch(target, {
+      method: req.method,
+      headers: req.headers,
+      body: req.body,
+      redirect: "manual",
+    });
+  } catch {
+    return new Response("Next.js app unavailable", { status: 502 });
+  }
+}
 
 function resolveRoute(routeName: string): { targetId: string; authToken: string } {
   const route = config.routes[routeName]!;
@@ -107,7 +123,7 @@ Bun.serve({
   fetch(req) {
     const url = new URL(req.url);
 
-    if (url.pathname === "/" || url.pathname === "/health") {
+    if (url.pathname === "/health") {
       if (req.method !== "GET" && req.method !== "HEAD") {
         return new Response("Method not allowed", { status: 405 });
       }
@@ -125,7 +141,7 @@ Bun.serve({
       return handleWebhook(req, name);
     }
 
-    return new Response("Not found", { status: 404 });
+    return proxyToNext(req);
   },
 });
 
