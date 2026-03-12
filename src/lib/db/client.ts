@@ -4,9 +4,9 @@ let sql: postgres.Sql | null = null;
 
 export function getDb(): postgres.Sql {
   if (!sql) {
-    const url = process.env.DATABASE_URL;
+    const url = process.env.POSTGRESQL_ADDON_URI;
     if (!url) {
-      throw new Error("DATABASE_URL environment variable is required");
+      throw new Error("POSTGRESQL_ADDON_URI environment variable is required");
     }
     sql = postgres(url);
   }

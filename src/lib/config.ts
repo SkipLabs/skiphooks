@@ -59,10 +59,7 @@ function buildConfig(): Config {
     "reddit-scout/1.0 by u/yourusername"
   );
   const anthropicApiKey = collectEnv("ANTHROPIC_API_KEY");
-  const databaseUrl = collectEnv("DATABASE_URL");
-  const subredditsRaw = collectEnv("SCOUT_SUBREDDITS");
-  const topicDescription = collectEnv("SCOUT_TOPIC_DESCRIPTION");
-  const replyPersona = collectEnv("SCOUT_REPLY_PERSONA");
+  const databaseUrl = collectEnv("POSTGRESQL_ADDON_URI");
 
   if (errors.length > 0) {
     throw new Error(
@@ -71,8 +68,8 @@ function buildConfig(): Config {
   }
 
   const scoring: ScoringConfig = {
-    topicDescription,
-    replyPersona,
+    topicDescription: "",
+    replyPersona: "",
     threadThreshold: safeParseFloat(
       optionalEnv("SCOUT_THREAD_THRESHOLD", "0.5"),
       "SCOUT_THREAD_THRESHOLD"
@@ -102,7 +99,7 @@ function buildConfig(): Config {
       url: databaseUrl,
     }),
     pipeline: Object.freeze({
-      subreddits: subredditsRaw.split(",").map((s) => s.trim()).filter(Boolean),
+      subreddits: [],
       batchSize: safeParseInt(
         optionalEnv("SCOUT_BATCH_SIZE", "20"),
         "SCOUT_BATCH_SIZE"
@@ -123,10 +120,7 @@ const REQUIRED_SCOUT_VARS = [
   "REDDIT_CLIENT_ID",
   "REDDIT_CLIENT_SECRET",
   "ANTHROPIC_API_KEY",
-  "DATABASE_URL",
-  "SCOUT_SUBREDDITS",
-  "SCOUT_TOPIC_DESCRIPTION",
-  "SCOUT_REPLY_PERSONA",
+  "POSTGRESQL_ADDON_URI",
 ] as const;
 
 export type ScoutWarning = { variable: string; label: string };
@@ -135,10 +129,7 @@ const VAR_LABELS: Record<string, string> = {
   REDDIT_CLIENT_ID: "Reddit OAuth client ID",
   REDDIT_CLIENT_SECRET: "Reddit OAuth client secret",
   ANTHROPIC_API_KEY: "Anthropic API key (for scoring)",
-  DATABASE_URL: "PostgreSQL connection string",
-  SCOUT_SUBREDDITS: "Subreddits to monitor",
-  SCOUT_TOPIC_DESCRIPTION: "Topic description for scoring",
-  SCOUT_REPLY_PERSONA: "Reply persona for suggestions",
+  POSTGRESQL_ADDON_URI: "PostgreSQL connection string",
 };
 
 export function getScoutWarnings(): ScoutWarning[] {
@@ -149,7 +140,7 @@ export function getScoutWarnings(): ScoutWarning[] {
 }
 
 export function hasDatabase(): boolean {
-  return !!process.env.DATABASE_URL;
+  return !!process.env.POSTGRESQL_ADDON_URI;
 }
 
 export interface PipelineConfig {
@@ -186,9 +177,9 @@ export async function loadPipelineConfig(): Promise<PipelineConfig> {
 
   // Fall back to env vars
   return {
-    subreddits: (process.env.SCOUT_SUBREDDITS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
-    topicDescription: process.env.SCOUT_TOPIC_DESCRIPTION ?? "",
-    replyPersona: process.env.SCOUT_REPLY_PERSONA ?? "",
+    subreddits: [],
+    topicDescription: "",
+    replyPersona: "",
     threadThreshold: parseFloat(process.env.SCOUT_THREAD_THRESHOLD ?? "0.5"),
     commentThreshold: parseFloat(process.env.SCOUT_COMMENT_THRESHOLD ?? "0.6"),
     rateLimitMs: parseInt(process.env.SCOUT_RATE_LIMIT_MS ?? "1000", 10),
