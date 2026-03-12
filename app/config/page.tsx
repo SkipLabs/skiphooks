@@ -1,53 +1,7 @@
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers } from "@/src/db";
+import "./config.css";
 
 export const dynamic = "force-dynamic";
-
-const table: React.CSSProperties = {
-  borderCollapse: "collapse",
-  width: "100%",
-  fontSize: "0.875rem",
-};
-
-const th: React.CSSProperties = {
-  textAlign: "left",
-  padding: "0.5rem 0.75rem",
-  borderBottom: "2px solid #e5e7eb",
-  fontWeight: 600,
-};
-
-const td: React.CSSProperties = {
-  padding: "0.5rem 0.75rem",
-  borderBottom: "1px solid #f3f4f6",
-};
-
-const mono: React.CSSProperties = {
-  fontFamily: "monospace",
-  fontSize: "0.8rem",
-};
-
-const section: React.CSSProperties = {
-  marginBottom: "2rem",
-};
-
-const badge: React.CSSProperties = {
-  display: "inline-block",
-  padding: "0.125rem 0.5rem",
-  borderRadius: "9999px",
-  fontSize: "0.75rem",
-  fontWeight: 500,
-};
-
-const groupBadge: React.CSSProperties = {
-  ...badge,
-  backgroundColor: "#dbeafe",
-  color: "#1e40af",
-};
-
-const streamBadge: React.CSSProperties = {
-  ...badge,
-  backgroundColor: "#fef3c7",
-  color: "#92400e",
-};
 
 export default async function ConfigPage() {
   const [authTokens, groups, routes, calendarUsers] = await Promise.all([
@@ -58,121 +12,163 @@ export default async function ConfigPage() {
   ]);
 
   return (
-    <main style={{ maxWidth: "56rem", margin: "0 auto", padding: "2rem 1rem" }}>
-      <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "2rem" }}>
-        Database Configuration
-      </h1>
-
-      <div style={section}>
-        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.75rem" }}>
-          Auth Tokens
-        </h2>
-        <table style={table}>
-          <thead>
-            <tr>
-              <th style={th}>Name</th>
-              <th style={th}>Token</th>
-            </tr>
-          </thead>
-          <tbody>
-            {authTokens.map((t) => (
-              <tr key={t.name}>
-                <td style={td}>{t.name}</td>
-                <td style={{ ...td, ...mono }}>{t.tokenPreview}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={section}>
-        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.75rem" }}>
-          Groups
-        </h2>
-        <table style={table}>
-          <thead>
-            <tr>
-              <th style={th}>Name</th>
-              <th style={th}>Slashwork ID</th>
-              <th style={th}>Auth Token</th>
-            </tr>
-          </thead>
-          <tbody>
-            {groups.map((g) => (
-              <tr key={g.name}>
-                <td style={td}>{g.name}</td>
-                <td style={{ ...td, ...mono }}>{g.slashworkId}</td>
-                <td style={td}>{g.authToken}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div style={section}>
-        <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.75rem" }}>
-          Routes
-        </h2>
-        <table style={table}>
-          <thead>
-            <tr>
-              <th style={th}>Name</th>
-              <th style={th}>Type</th>
-              <th style={th}>Target</th>
-              <th style={th}>Auth Token</th>
-            </tr>
-          </thead>
-          <tbody>
-            {routes.map((r) => (
-              <tr key={r.name}>
-                <td style={{ ...td, ...mono }}>/github/{r.name}</td>
-                <td style={td}>
-                  {r.groupName ? (
-                    <span style={groupBadge}>group</span>
-                  ) : (
-                    <span style={streamBadge}>stream</span>
-                  )}
-                </td>
-                <td style={{ ...td, ...mono }}>
-                  {r.groupName ?? r.streamId}
-                </td>
-                <td style={td}>
-                  {r.groupName ? (
-                    <span style={{ color: "#6b7280", fontStyle: "italic" }}>via group</span>
-                  ) : (
-                    r.authToken
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {calendarUsers.length > 0 && (
-        <div style={section}>
-          <h2 style={{ fontSize: "1.125rem", fontWeight: 600, marginBottom: "0.75rem" }}>
-            Calendar Users
-          </h2>
-          <table style={table}>
-            <thead>
-              <tr>
-                <th style={th}>Name</th>
-                <th style={th}>Calendar ID</th>
-                <th style={th}>Target ID</th>
-              </tr>
-            </thead>
-            <tbody>
-              {calendarUsers.map((u) => (
-                <tr key={u.name}>
-                  <td style={td}>{u.name}</td>
-                  <td style={{ ...td, ...mono }}>{u.calendarId}</td>
-                  <td style={{ ...td, ...mono }}>{u.targetId}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div className="cfg-page">
+      <main className="cfg-container">
+        <div className="cfg-header">
+          <h1 className="cfg-title">
+            <span>skiphooks</span> / config
+          </h1>
+          <span className="cfg-subtitle">database state</span>
         </div>
-      )}
-    </main>
+
+        <div className="cfg-grid">
+          {/* Auth Tokens */}
+          <div className="cfg-section">
+            <div className="cfg-section-header">
+              <h2 className="cfg-section-title">Auth Tokens</h2>
+              <span className="cfg-count">{authTokens.length}</span>
+            </div>
+            <table className="cfg-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Token</th>
+                </tr>
+              </thead>
+              <tbody>
+                {authTokens.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="cfg-empty">
+                      No auth tokens configured
+                    </td>
+                  </tr>
+                ) : (
+                  authTokens.map((t) => (
+                    <tr key={t.name}>
+                      <td>{t.name}</td>
+                      <td className="cfg-token">{t.tokenPreview}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Groups */}
+          <div className="cfg-section">
+            <div className="cfg-section-header">
+              <h2 className="cfg-section-title">Groups</h2>
+              <span className="cfg-count">{groups.length}</span>
+            </div>
+            <table className="cfg-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Slashwork ID</th>
+                  <th>Auth Token</th>
+                </tr>
+              </thead>
+              <tbody>
+                {groups.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="cfg-empty">
+                      No groups configured
+                    </td>
+                  </tr>
+                ) : (
+                  groups.map((g) => (
+                    <tr key={g.name}>
+                      <td>{g.name}</td>
+                      <td className="cfg-mono">{g.slashworkId}</td>
+                      <td>{g.authToken}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Routes */}
+          <div className="cfg-section cfg-section--wide">
+            <div className="cfg-section-header">
+              <h2 className="cfg-section-title">Routes</h2>
+              <span className="cfg-count">{routes.length}</span>
+            </div>
+            <table className="cfg-table">
+              <thead>
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Type</th>
+                  <th>Target</th>
+                  <th>Auth Token</th>
+                </tr>
+              </thead>
+              <tbody>
+                {routes.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="cfg-empty">
+                      No routes configured
+                    </td>
+                  </tr>
+                ) : (
+                  routes.map((r) => (
+                    <tr key={r.name}>
+                      <td className="cfg-path">/github/{r.name}</td>
+                      <td>
+                        {r.groupName ? (
+                          <span className="cfg-badge cfg-badge--group">
+                            group
+                          </span>
+                        ) : (
+                          <span className="cfg-badge cfg-badge--stream">
+                            stream
+                          </span>
+                        )}
+                      </td>
+                      <td className="cfg-mono">{r.groupName ?? r.streamId}</td>
+                      <td>
+                        {r.groupName ? (
+                          <span className="cfg-muted">via group</span>
+                        ) : (
+                          r.authToken
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Calendar Users */}
+          {calendarUsers.length > 0 && (
+            <div className="cfg-section cfg-section--wide">
+              <div className="cfg-section-header">
+                <h2 className="cfg-section-title">Calendar Users</h2>
+                <span className="cfg-count">{calendarUsers.length}</span>
+              </div>
+              <table className="cfg-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Calendar ID</th>
+                    <th>Target ID</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {calendarUsers.map((u) => (
+                    <tr key={u.name}>
+                      <td>{u.name}</td>
+                      <td className="cfg-mono">{u.calendarId}</td>
+                      <td className="cfg-mono">{u.targetId}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }
