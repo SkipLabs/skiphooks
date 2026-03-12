@@ -3,7 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "postinstall": "next build",
+    "postinstall": "rm -rf .next && next build",
     "dev": "next dev -H 0.0.0.0 -p ${PORT:-8080}",
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
@@ -12,6 +12,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "next": "^15",
