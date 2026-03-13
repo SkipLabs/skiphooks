@@ -29,12 +29,12 @@ export default function NavMenu() {
 
       <nav className={`nav-drawer${open ? " nav-drawer--open" : ""}`}>
         <div className="nav-links">
-          <Link href="/config" className="nav-link" onClick={() => setOpen(false)}>
+          <Link href="/slashwork" className="nav-link" onClick={() => setOpen(false)}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6.5 1.5h3l.5 2.1 1.8.7 1.9-1.1 2.1 2.1-1.1 1.9.7 1.8 2.1.5v3l-2.1.5-.7 1.8 1.1 1.9-2.1 2.1-1.9-1.1-1.8.7-.5 2.1h-3l-.5-2.1-1.8-.7-1.9 1.1-2.1-2.1 1.1-1.9-.7-1.8L.5 9.5v-3l2.1-.5.7-1.8-1.1-1.9 2.1-2.1 1.9 1.1 1.8-.7z" />
               <circle cx="8" cy="8" r="2.5" />
             </svg>
-            Config
+            Slashwork
           </Link>
           <Link href="/scout" className="nav-link" onClick={() => setOpen(false)}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

@@ -1,9 +1,9 @@
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers } from "@/src/db";
-import "./config.css";
+import "./slashwork.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function ConfigPage() {
+export default async function SlashworkPage() {
   const [authTokens, groups, routes, calendarUsers] = await Promise.all([
     getAuthTokens(),
     getGroups(),
@@ -12,23 +12,23 @@ export default async function ConfigPage() {
   ]);
 
   return (
-    <div className="cfg-page">
-      <main className="cfg-container">
-        <div className="cfg-header">
-          <h1 className="cfg-title">
-            <span>skiphooks</span> / config
+    <div className="sw-page">
+      <main className="sw-container">
+        <div className="sw-header">
+          <h1 className="sw-title">
+            <span>skiphooks</span> / slashwork
           </h1>
-          <span className="cfg-subtitle">database state</span>
+          <span className="sw-subtitle">database state</span>
         </div>
 
-        <div className="cfg-grid">
+        <div className="sw-grid">
           {/* Auth Tokens */}
-          <div className="cfg-section">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Auth Tokens</h2>
-              <span className="cfg-count">{authTokens.length}</span>
+          <div className="sw-section">
+            <div className="sw-section-header">
+              <h2 className="sw-section-title">Auth Tokens</h2>
+              <span className="sw-count">{authTokens.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="sw-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -38,7 +38,7 @@ export default async function ConfigPage() {
               <tbody>
                 {authTokens.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="cfg-empty">
+                    <td colSpan={2} className="sw-empty">
                       No auth tokens configured
                     </td>
                   </tr>
@@ -46,7 +46,7 @@ export default async function ConfigPage() {
                   authTokens.map((t) => (
                     <tr key={t.name}>
                       <td>{t.name}</td>
-                      <td className="cfg-token">{t.tokenPreview}</td>
+                      <td className="sw-token">{t.tokenPreview}</td>
                     </tr>
                   ))
                 )}
@@ -55,12 +55,12 @@ export default async function ConfigPage() {
           </div>
 
           {/* Groups */}
-          <div className="cfg-section">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Groups</h2>
-              <span className="cfg-count">{groups.length}</span>
+          <div className="sw-section">
+            <div className="sw-section-header">
+              <h2 className="sw-section-title">Groups</h2>
+              <span className="sw-count">{groups.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="sw-table">
               <thead>
                 <tr>
                   <th>Name</th>
@@ -71,7 +71,7 @@ export default async function ConfigPage() {
               <tbody>
                 {groups.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="cfg-empty">
+                    <td colSpan={3} className="sw-empty">
                       No groups configured
                     </td>
                   </tr>
@@ -79,7 +79,7 @@ export default async function ConfigPage() {
                   groups.map((g) => (
                     <tr key={g.name}>
                       <td>{g.name}</td>
-                      <td className="cfg-mono">{g.slashworkId}</td>
+                      <td className="sw-mono">{g.slashworkId}</td>
                       <td>{g.authToken}</td>
                     </tr>
                   ))
@@ -89,12 +89,12 @@ export default async function ConfigPage() {
           </div>
 
           {/* Routes */}
-          <div className="cfg-section cfg-section--wide">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Routes</h2>
-              <span className="cfg-count">{routes.length}</span>
+          <div className="sw-section sw-section--wide">
+            <div className="sw-section-header">
+              <h2 className="sw-section-title">Routes</h2>
+              <span className="sw-count">{routes.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="sw-table">
               <thead>
                 <tr>
                   <th>Endpoint</th>
@@ -106,29 +106,29 @@ export default async function ConfigPage() {
               <tbody>
                 {routes.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="cfg-empty">
+                    <td colSpan={4} className="sw-empty">
                       No routes configured
                     </td>
                   </tr>
                 ) : (
                   routes.map((r) => (
                     <tr key={r.name}>
-                      <td className="cfg-path">/github/{r.name}</td>
+                      <td className="sw-path">/github/{r.name}</td>
                       <td>
                         {r.groupName ? (
-                          <span className="cfg-badge cfg-badge--group">
+                          <span className="sw-badge sw-badge--group">
                             group
                           </span>
                         ) : (
-                          <span className="cfg-badge cfg-badge--stream">
+                          <span className="sw-badge sw-badge--stream">
                             stream
                           </span>
                         )}
                       </td>
-                      <td className="cfg-mono">{r.groupName ?? r.streamId}</td>
+                      <td className="sw-mono">{r.groupName ?? r.streamId}</td>
                       <td>
                         {r.groupName ? (
-                          <span className="cfg-muted">via group</span>
+                          <span className="sw-muted">via group</span>
                         ) : (
                           r.authToken
                         )}
@@ -142,12 +142,12 @@ export default async function ConfigPage() {
 
           {/* Calendar Users */}
           {calendarUsers.length > 0 && (
-            <div className="cfg-section cfg-section--wide">
-              <div className="cfg-section-header">
-                <h2 className="cfg-section-title">Calendar Users</h2>
-                <span className="cfg-count">{calendarUsers.length}</span>
+            <div className="sw-section sw-section--wide">
+              <div className="sw-section-header">
+                <h2 className="sw-section-title">Calendar Users</h2>
+                <span className="sw-count">{calendarUsers.length}</span>
               </div>
-              <table className="cfg-table">
+              <table className="sw-table">
                 <thead>
                   <tr>
                     <th>Name</th>
@@ -159,8 +159,8 @@ export default async function ConfigPage() {
                   {calendarUsers.map((u) => (
                     <tr key={u.name}>
                       <td>{u.name}</td>
-                      <td className="cfg-mono">{u.calendarId}</td>
-                      <td className="cfg-mono">{u.targetId}</td>
+                      <td className="sw-mono">{u.calendarId}</td>
+                      <td className="sw-mono">{u.targetId}</td>
                     </tr>
                   ))}
                 </tbody>

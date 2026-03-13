@@ -1,4 +1,4 @@
-.cfg-page {
+.sw-page {
   background: var(--cfg-bg);
   min-height: 100vh;
   color: var(--cfg-text);
@@ -6,13 +6,13 @@
   -webkit-font-smoothing: antialiased;
 }
 
-.cfg-container {
+.sw-container {
   max-width: 72rem;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
 }
 
-.cfg-header {
+.sw-header {
   display: flex;
   align-items: baseline;
   gap: 0.75rem;
@@ -21,7 +21,7 @@
   border-bottom: 1px solid var(--cfg-border);
 }
 
-.cfg-title {
+.sw-title {
   font-family: var(--cfg-mono);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -29,41 +29,41 @@
   letter-spacing: 0.04em;
 }
 
-.cfg-title span {
+.sw-title span {
   color: var(--cfg-text-dim);
 }
 
-.cfg-subtitle {
+.sw-subtitle {
   font-size: 0.75rem;
   color: var(--cfg-text-dim);
   font-family: var(--cfg-mono);
 }
 
 /* Grid layout for sections */
-.cfg-grid {
+.sw-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1.25rem;
 }
 
 @media (max-width: 768px) {
-  .cfg-grid {
+  .sw-grid {
     grid-template-columns: 1fr;
   }
 }
 
-.cfg-section {
+.sw-section {
   background: var(--cfg-surface);
   border: 1px solid var(--cfg-border);
   border-radius: 6px;
   overflow: hidden;
 }
 
-.cfg-section--wide {
+.sw-section--wide {
   grid-column: 1 / -1;
 }
 
-.cfg-section-header {
+.sw-section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -71,7 +71,7 @@
   border-bottom: 1px solid var(--cfg-border);
 }
 
-.cfg-section-title {
+.sw-section-title {
   font-family: var(--cfg-mono);
   font-size: 0.6875rem;
   font-weight: 500;
@@ -80,7 +80,7 @@
   color: var(--cfg-text-muted);
 }
 
-.cfg-count {
+.sw-count {
   font-family: var(--cfg-mono);
   font-size: 0.625rem;
   color: var(--cfg-text-dim);
@@ -90,13 +90,13 @@
 }
 
 /* Table styles */
-.cfg-table {
+.sw-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8125rem;
 }
 
-.cfg-table thead th {
+.sw-table thead th {
   text-align: left;
   padding: 0.4375rem 0.875rem;
   font-family: var(--cfg-mono);
@@ -109,51 +109,51 @@
   border-bottom: 1px solid var(--cfg-border-subtle);
 }
 
-.cfg-table tbody tr {
+.sw-table tbody tr {
   transition: background 0.1s ease;
 }
 
-.cfg-table tbody tr:hover {
+.sw-table tbody tr:hover {
   background: var(--cfg-surface-hover);
 }
 
-.cfg-table tbody td {
+.sw-table tbody td {
   padding: 0.5rem 0.875rem;
   border-bottom: 1px solid var(--cfg-border-subtle);
   color: var(--cfg-text);
   white-space: nowrap;
 }
 
-.cfg-table tbody tr:last-child td {
+.sw-table tbody tr:last-child td {
   border-bottom: none;
 }
 
 /* Mono text for IDs, tokens, paths */
-.cfg-mono {
+.sw-mono {
   font-family: var(--cfg-mono);
   font-size: 0.75rem;
 }
 
-.cfg-token {
+.sw-token {
   font-family: var(--cfg-mono);
   font-size: 0.75rem;
   color: var(--cfg-text-muted);
 }
 
-.cfg-path {
+.sw-path {
   font-family: var(--cfg-mono);
   font-size: 0.75rem;
   color: var(--cfg-accent);
 }
 
-.cfg-muted {
+.sw-muted {
   color: var(--cfg-text-dim);
   font-style: italic;
   font-size: 0.75rem;
 }
 
 /* Badges */
-.cfg-badge {
+.sw-badge {
   display: inline-block;
   font-family: var(--cfg-mono);
   font-size: 0.625rem;
@@ -164,18 +164,18 @@
   border-radius: 3px;
 }
 
-.cfg-badge--group {
+.sw-badge--group {
   background: var(--cfg-accent-dim);
   color: var(--cfg-accent);
 }
 
-.cfg-badge--stream {
+.sw-badge--stream {
   background: var(--cfg-amber-dim);
   color: var(--cfg-amber);
 }
 
 /* Empty state */
-.cfg-empty {
+.sw-empty {
   padding: 1.5rem 0.875rem;
   text-align: center;
   color: var(--cfg-text-dim);
