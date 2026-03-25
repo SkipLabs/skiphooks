@@ -4,6 +4,7 @@ import { runMigrations, getAllRoutes, getCalendarUsers, getAuthToken } from "@/s
 import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
+import { startGroupSyncPoller } from "@/src/slashwork-sync";
 
 function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
@@ -31,6 +32,14 @@ export async function register() {
         () => log("info", `Route ${route.name}: auth validated`),
         (err) => log("error", `Route ${route.name}: ${err}`),
       );
+    }
+    // Start group sync poller using the first route's auth token
+    if (routes.length > 0) {
+      startGroupSyncPoller(
+        { graphqlUrl: config.slashwork.graphqlUrl, authToken: routes[0]!.authToken },
+        log,
+      );
+      log("info", "Group sync: poller started (24h interval)");
     }
   } catch (err) {
     log("error", `Failed to load routes from DB: ${err}`);
