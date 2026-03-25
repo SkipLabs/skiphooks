@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { getGroups, getAuthToken } from "@/src/db";
-import { getAnthropicClient } from "@/src/lib/scoring/client";
 
 const FETCH_POSTS_QUERY = `
   query FetchGroupPosts($groupId: ID!, $first: Int!) {
@@ -221,7 +221,11 @@ export async function POST(request: Request) {
   const formatted = formatPosts(weekPosts);
 
   try {
-    const anthropic = getAnthropicClient();
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+    }
+    const anthropic = new Anthropic({ apiKey });
     const aiResponse = await anthropic.messages.create({
       model: "claude-sonnet-4-5-20250514",
       max_tokens: 2048,
