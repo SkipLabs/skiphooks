@@ -36,6 +36,12 @@ export default function NavMenu() {
             </svg>
             Slashwork
           </Link>
+          <Link href="/summary" className="nav-link" onClick={() => setOpen(false)}>
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 3h10M3 6.5h7M3 10h10M3 13.5h5" />
+            </svg>
+            Weekly Summary
+          </Link>
           <Link href="/scout" className="nav-link" onClick={() => setOpen(false)}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="7" cy="7" r="5.5" />
