@@ -6,18 +6,28 @@ interface SummaryFormProps {
   groups: string[];
 }
 
-const WEEK_OPTIONS = [
-  { value: "current", label: "Current week" },
-  { value: "previous", label: "Previous week" },
-  ...Array.from({ length: 52 }, (_, i) => ({
-    value: `week${String(i + 1).padStart(2, "0")}`,
-    label: `Week ${String(i + 1).padStart(2, "0")}`,
-  })),
-];
+function getISOWeek(date: Date): number {
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
+const currentWeek = getISOWeek(new Date());
+const previousWeek = getISOWeek(new Date(Date.now() - 7 * 86400000));
+
+const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
+  const num = i + 1;
+  const pad = String(num).padStart(2, "0");
+  let label = `Week ${pad}`;
+  if (num === currentWeek) label += " (current)";
+  else if (num === previousWeek) label += " (previous)";
+  return { value: `week${pad}`, label };
+});
 
 export default function SummaryForm({ groups }: SummaryFormProps) {
   const [group, setGroup] = useState(groups[0] ?? "");
-  const [week, setWeek] = useState("current");
+  const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [postCount, setPostCount] = useState<number | null>(null);
@@ -108,6 +118,15 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
           </div>
         </div>
       </form>
+
+      {loading && (
+        <div className="sum-loading">
+          <div className="sum-loading-dots">
+            <span /><span /><span />
+          </div>
+          <span>Summarizing...</span>
+        </div>
+      )}
 
       {error && (
         <div className="sum-error">{error}</div>
