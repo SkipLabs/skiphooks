@@ -4,10 +4,14 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getGroups, getAuthToken } from "@/src/db";
 
 const FETCH_POSTS_QUERY = `
-  query FetchGroupPosts($groupId: ID!, $first: Int!) {
+  query FetchGroupPosts($groupId: ID!, $first: Int!, $after: String) {
     fetch__Group(id: $groupId) {
       name
-      posts(first: $first) {
+      posts(first: $first, after: $after) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
         edges {
           node {
             id
@@ -68,7 +72,10 @@ interface FetchResponse {
   data?: {
     fetch__Group: {
       name: string;
-      posts: { edges: Array<{ node: PostNode }> };
+      posts: {
+        pageInfo: { hasNextPage: boolean; endCursor: string | null };
+        edges: Array<{ node: PostNode }>;
+      };
     };
   };
   errors?: Array<{ message: string }>;
@@ -176,38 +183,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "SLASHWORK_GRAPHQL_URL not configured" }, { status: 500 });
   }
 
-  // Fetch posts from Slashwork
-  const response = await fetch(graphqlUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${authToken}`,
-    },
-    body: JSON.stringify({
-      query: FETCH_POSTS_QUERY,
-      variables: { groupId: dbGroup.slashworkId, first: 100 },
-    }),
-  });
-
-  if (!response.ok) {
-    return NextResponse.json(
-      { error: `Slashwork API error: ${response.status}` },
-      { status: 502 },
-    );
-  }
-
-  const result = (await response.json()) as FetchResponse;
-  if (result.errors?.length) {
-    return NextResponse.json(
-      { error: `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}` },
-      { status: 502 },
-    );
-  }
-
-  // Filter posts by week
+  // Fetch posts from Slashwork with pagination
   const { start, end, label } = computeWeekRange(week);
-  const allPosts = result.data?.fetch__Group?.posts?.edges?.map((e) => e.node) ?? [];
-  const weekPosts = allPosts.filter((p) => p.created >= start && p.created <= end);
+  const weekPosts: PostNode[] = [];
+  let cursor: string | null = null;
+  const MAX_PAGES = 10; // safety limit
+
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const variables: Record<string, unknown> = { groupId: dbGroup.slashworkId, first: 100 };
+    if (cursor) variables.after = cursor;
+
+    const response = await fetch(graphqlUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ query: FETCH_POSTS_QUERY, variables }),
+    });
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { error: `Slashwork API error: ${response.status}` },
+        { status: 502 },
+      );
+    }
+
+    const result = (await response.json()) as FetchResponse;
+    if (result.errors?.length) {
+      return NextResponse.json(
+        { error: `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}` },
+        { status: 502 },
+      );
+    }
+
+    const posts = result.data?.fetch__Group?.posts;
+    const nodes = posts?.edges?.map((e) => e.node) ?? [];
+
+    if (nodes.length === 0) break;
+
+    // Collect posts within the target week
+    for (const post of nodes) {
+      if (post.created >= start && post.created <= end) {
+        weekPosts.push(post);
+      }
+    }
+
+    // Posts are ordered newest-first. If the oldest post in this page
+    // is older than the week start, we've gone far enough.
+    const oldestInPage = nodes[nodes.length - 1]!.created;
+    if (oldestInPage < start) break;
+
+    // No more pages
+    if (!posts?.pageInfo?.hasNextPage) break;
+    cursor = posts?.pageInfo?.endCursor ?? null;
+    if (!cursor) break;
+  }
 
   if (weekPosts.length === 0) {
     return NextResponse.json({
