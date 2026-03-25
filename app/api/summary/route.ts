@@ -219,25 +219,33 @@ export async function POST(request: Request) {
 
   // Format and summarize
   const formatted = formatPosts(weekPosts);
-  const anthropic = getAnthropicClient();
 
-  const aiResponse = await anthropic.messages.create({
-    model: "claude-sonnet-4-5-20250514",
-    max_tokens: 2048,
-    messages: [
-      {
-        role: "user",
-        content: `Summarize the following messages from the '${group}' group for ${label}. Give a concise overview of the key topics, decisions, and action items discussed:\n\n${formatted}`,
-      },
-    ],
-  });
+  try {
+    const anthropic = getAnthropicClient();
+    const aiResponse = await anthropic.messages.create({
+      model: "claude-sonnet-4-5-20250514",
+      max_tokens: 2048,
+      messages: [
+        {
+          role: "user",
+          content: `Summarize the following messages from the '${group}' group for ${label}. Give a concise overview of the key topics, decisions, and action items discussed:\n\n${formatted}`,
+        },
+      ],
+    });
 
-  const summaryBlock = aiResponse.content[0] ?? { type: "text" as const, text: "" };
-  const summary = summaryBlock.type === "text" ? summaryBlock.text : "";
+    const summaryBlock = aiResponse.content[0] ?? { type: "text" as const, text: "" };
+    const summary = summaryBlock.type === "text" ? summaryBlock.text : "";
 
-  return NextResponse.json({
-    summary,
-    postCount: weekPosts.length,
-    weekLabel: label,
-  });
+    return NextResponse.json({
+      summary,
+      postCount: weekPosts.length,
+      weekLabel: label,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json(
+      { error: `Summarization failed: ${message}` },
+      { status: 502 },
+    );
+  }
 }

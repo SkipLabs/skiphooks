@@ -39,15 +39,21 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
         body: JSON.stringify({ group, week }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || `HTTP ${res.status}`);
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Server error (HTTP ${res.status})`);
       }
 
-      setSummary(data.summary);
-      setPostCount(data.postCount);
-      setWeekLabel(data.weekLabel);
+      if (!res.ok) {
+        throw new Error((data.error as string) || `HTTP ${res.status}`);
+      }
+
+      setSummary(data.summary as string);
+      setPostCount(data.postCount as number);
+      setWeekLabel(data.weekLabel as string);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
