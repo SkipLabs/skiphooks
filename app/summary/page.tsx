@@ -1,4 +1,4 @@
-import { getGroups } from "@/src/db";
+import { getGroups, getAuthTokens } from "@/src/db";
 import { hasDatabase } from "@/src/lib/config";
 import SummaryForm from "./summary-form";
 import "./summary.css";
@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 
 export default async function SummaryPage() {
   const dbAvailable = hasDatabase();
-  const groups = dbAvailable ? await getGroups() : [];
+  const [groups, authTokens] = dbAvailable
+    ? await Promise.all([getGroups(), getAuthTokens()])
+    : [[], []];
 
   return (
     <div className="sum-page">
@@ -25,7 +27,10 @@ export default async function SummaryPage() {
           </div>
         )}
 
-        <SummaryForm groups={groups.map((g) => g.name)} />
+        <SummaryForm
+          groups={groups.map((g) => g.name)}
+          authTokenNames={authTokens.map((t) => t.name)}
+        />
       </main>
     </div>
   );

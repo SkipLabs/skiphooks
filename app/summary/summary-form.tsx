@@ -4,6 +4,7 @@ import { useState } from "react";
 
 interface SummaryFormProps {
   groups: string[];
+  authTokenNames: string[];
 }
 
 function getISOWeek(date: Date): number {
@@ -28,7 +29,7 @@ const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
 const DEFAULT_PROMPT =
   "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:";
 
-export default function SummaryForm({ groups }: SummaryFormProps) {
+export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps) {
   const [group, setGroup] = useState(groups[0] ?? "");
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
@@ -37,6 +38,13 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
   const [postCount, setPostCount] = useState<number | null>(null);
   const [weekLabel, setWeekLabel] = useState("");
   const [error, setError] = useState("");
+
+  // Publish state
+  const [publishGroup, setPublishGroup] = useState(groups[0] ?? "");
+  const [publishAs, setPublishAs] = useState(authTokenNames[0] ?? "");
+  const [publishing, setPublishing] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
+  const [publishError, setPublishError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -72,6 +80,44 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handlePublish() {
+    setPublishing(true);
+    setPublishStatus("idle");
+    setPublishError("");
+
+    try {
+      const res = await fetch("/api/summary/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          targetGroup: publishGroup,
+          authTokenName: publishAs,
+          markdown: summary,
+        }),
+      });
+
+      const text = await res.text();
+      let data: Record<string, unknown>;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(`Server error (HTTP ${res.status})`);
+      }
+
+      if (!res.ok) {
+        throw new Error((data.error as string) || `HTTP ${res.status}`);
+      }
+
+      setPublishStatus("success");
+      setTimeout(() => setPublishStatus("idle"), 5000);
+    } catch (err) {
+      setPublishStatus("error");
+      setPublishError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -159,6 +205,56 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
             </span>
           </div>
           <div className="sum-result-body">{summary}</div>
+
+          <div className="sum-publish">
+            <div className="sum-publish-header">Publish</div>
+            <div className="sum-form-row">
+              <div className="sum-field">
+                <label htmlFor="sum-publish-group">Post to</label>
+                <select
+                  id="sum-publish-group"
+                  value={publishGroup}
+                  onChange={(e) => setPublishGroup(e.target.value)}
+                >
+                  {groups.map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sum-field">
+                <label htmlFor="sum-publish-as">Post as</label>
+                <select
+                  id="sum-publish-as"
+                  value={publishAs}
+                  onChange={(e) => setPublishAs(e.target.value)}
+                >
+                  {authTokenNames.map((t) => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="sum-field sum-field--action">
+                <button
+                  type="button"
+                  className="sum-publish-btn"
+                  disabled={publishing}
+                  onClick={handlePublish}
+                >
+                  {publishing ? "Publishing..." : "Publish"}
+                </button>
+              </div>
+            </div>
+            {publishStatus === "success" && (
+              <div className="sum-publish-status sum-publish-status--ok">
+                Published to {publishGroup}
+              </div>
+            )}
+            {publishStatus === "error" && (
+              <div className="sum-publish-status sum-publish-status--err">
+                {publishError}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

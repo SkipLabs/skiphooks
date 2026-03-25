@@ -233,6 +233,60 @@
   white-space: pre-wrap;
 }
 
+/* Publish */
+.sum-publish {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--cfg-border);
+  padding-top: 1.25rem;
+}
+
+.sum-publish-header {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cfg-text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.sum-publish-btn {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cfg-bg);
+  background: var(--cfg-green);
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1.25rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+}
+
+.sum-publish-btn:hover {
+  opacity: 0.9;
+}
+
+.sum-publish-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sum-publish-status {
+  margin-top: 0.625rem;
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+}
+
+.sum-publish-status--ok {
+  color: var(--cfg-green);
+}
+
+.sum-publish-status--err {
+  color: #ef4444;
+}
+
 @media (max-width: 768px) {
   .sum-form-row {
     flex-direction: column;
