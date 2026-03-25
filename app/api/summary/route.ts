@@ -151,7 +151,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { group?: string; week?: string };
+  let body: { group?: string; week?: string; prompt?: string };
   try {
     body = await request.json();
   } catch {
@@ -263,7 +263,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `Summarize the following messages from the '${group}' group for ${label}. Give a concise overview of the key topics, decisions, and action items discussed:\n\n${formatted}`,
+          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nGroup: ${group} | ${label}\n\n${formatted}`,
         },
       ],
     });

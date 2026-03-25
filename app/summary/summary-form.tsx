@@ -25,9 +25,13 @@ const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
   return { value: `week${pad}`, label };
 });
 
+const DEFAULT_PROMPT =
+  "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:";
+
 export default function SummaryForm({ groups }: SummaryFormProps) {
   const [group, setGroup] = useState(groups[0] ?? "");
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
+  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [postCount, setPostCount] = useState<number | null>(null);
@@ -46,7 +50,7 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
       const res = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ group, week }),
+        body: JSON.stringify({ group, week, prompt: prompt.trim() || undefined }),
       });
 
       const text = await res.text();
@@ -107,6 +111,20 @@ export default function SummaryForm({ groups }: SummaryFormProps) {
             </select>
           </div>
 
+        </div>
+
+        <div className="sum-field">
+          <label htmlFor="sum-prompt">Prompt</label>
+          <textarea
+            id="sum-prompt"
+            className="sum-prompt"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={3}
+          />
+        </div>
+
+        <div className="sum-form-row">
           <div className="sum-field sum-field--action">
             <button
               type="submit"

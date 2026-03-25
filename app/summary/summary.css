@@ -102,6 +102,25 @@
   border-color: var(--cfg-accent);
 }
 
+.sum-prompt {
+  font-family: var(--cfg-mono);
+  font-size: 0.8125rem;
+  color: var(--cfg-text);
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: 4px;
+  padding: 0.5rem 0.625rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+  resize: vertical;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.sum-prompt:focus {
+  border-color: var(--cfg-accent);
+}
+
 .sum-submit {
   font-family: var(--cfg-mono);
   font-size: 0.75rem;
