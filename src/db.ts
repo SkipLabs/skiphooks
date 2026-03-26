@@ -252,3 +252,48 @@ export async function getAllRoutes(): Promise<DbRoute[]> {
     authToken: row.auth_token,
   }));
 }
+
+// Weekly digest config
+
+export interface DigestConfig {
+  targetGroupId: string;
+  authToken: string;
+  enabled: boolean;
+  lastRunAt: Date | null;
+}
+
+export async function getDigestConfig(): Promise<DigestConfig | null> {
+  const result = await getPool().query<{
+    target_group_id: string;
+    auth_token: string;
+    enabled: boolean;
+    last_run_at: Date | null;
+  }>("SELECT target_group_id, auth_token, enabled, last_run_at FROM weekly_digest_config WHERE id = 1");
+  const row = result.rows[0];
+  if (!row) return null;
+  return {
+    targetGroupId: row.target_group_id,
+    authToken: row.auth_token,
+    enabled: row.enabled,
+    lastRunAt: row.last_run_at,
+  };
+}
+
+export async function upsertDigestConfig(
+  targetGroupId: string,
+  authToken: string,
+  enabled: boolean,
+): Promise<void> {
+  await getPool().query(
+    `INSERT INTO weekly_digest_config (id, target_group_id, auth_token, enabled)
+     VALUES (1, $1, $2, $3)
+     ON CONFLICT (id) DO UPDATE SET target_group_id = $1, auth_token = $2, enabled = $3`,
+    [targetGroupId, authToken, enabled],
+  );
+}
+
+export async function updateDigestLastRun(): Promise<void> {
+  await getPool().query(
+    "UPDATE weekly_digest_config SET last_run_at = now() WHERE id = 1",
+  );
+}

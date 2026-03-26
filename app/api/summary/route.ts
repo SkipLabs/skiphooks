@@ -2,84 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getGroups, getAuthToken, getAuthTokens } from "@/src/db";
-
-const FETCH_POSTS_QUERY = `
-  query FetchGroupPosts($groupId: ID!, $first: Int!, $after: String) {
-    fetch__Group(id: $groupId) {
-      name
-      posts(first: $first, after: $after) {
-        pageInfo {
-          hasNextPage
-          endCursor
-        }
-        edges {
-          node {
-            id
-            markdown
-            created
-            author { id name }
-            comments(first: 100) {
-              edges {
-                node {
-                  markdown
-                  created
-                  author { name }
-                  replies(first: 100) {
-                    edges {
-                      node {
-                        markdown
-                        created
-                        author { name }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-`;
-
-interface PostNode {
-  id: string;
-  markdown: string;
-  created: string;
-  author: { id: string; name: string };
-  comments: {
-    edges: Array<{
-      node: {
-        markdown: string;
-        created: string;
-        author: { name: string };
-        replies: {
-          edges: Array<{
-            node: {
-              markdown: string;
-              created: string;
-              author: { name: string };
-            };
-          }>;
-        };
-      };
-    }>;
-  };
-}
-
-interface FetchResponse {
-  data?: {
-    fetch__Group: {
-      name: string;
-      posts: {
-        pageInfo: { hasNextPage: boolean; endCursor: string | null };
-        edges: Array<{ node: PostNode }>;
-      };
-    };
-  };
-  errors?: Array<{ message: string }>;
-}
+import { fetchGroupPosts, formatPosts } from "@/src/summary-utils";
 
 function computeWeekRange(weekArg: string): { start: string; end: string; label: string } {
   const now = new Date();
@@ -93,13 +16,11 @@ function computeWeekRange(weekArg: string): { start: string; end: string; label:
     weekNum = getISOWeek(prev);
     year = prev.getUTCFullYear();
   } else {
-    // weekXX
     weekNum = parseInt(weekArg.slice(4), 10);
   }
 
-  // Jan 4 is always in ISO week 1
   const jan4 = new Date(Date.UTC(year, 0, 4));
-  const jan4Dow = jan4.getUTCDay() || 7; // 1=Mon, 7=Sun
+  const jan4Dow = jan4.getUTCDay() || 7;
   const week1Monday = new Date(jan4.getTime() - (jan4Dow - 1) * 86400000);
   const targetMonday = new Date(week1Monday.getTime() + (weekNum - 1) * 7 * 86400000);
   const targetSunday = new Date(targetMonday.getTime() + 6 * 86400000);
@@ -122,29 +43,6 @@ function getISOWeek(date: Date): number {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-function formatPosts(posts: PostNode[]): string {
-  const lines: string[] = [];
-  for (const post of posts) {
-    const date = new Date(post.created).toISOString().slice(0, 16).replace("T", " ");
-    lines.push(`--- ${post.author.name} [${date}] ---`);
-    lines.push(post.markdown);
-
-    for (const { node: comment } of post.comments.edges) {
-      const cDate = new Date(comment.created).toISOString().slice(0, 16).replace("T", " ");
-      lines.push(`  > ${comment.author.name} [${cDate}]:`);
-      lines.push(`  ${comment.markdown}`);
-
-      for (const { node: reply } of comment.replies.edges) {
-        const rDate = new Date(reply.created).toISOString().slice(0, 16).replace("T", " ");
-        lines.push(`    >> ${reply.author.name} [${rDate}]:`);
-        lines.push(`    ${reply.markdown}`);
-      }
-    }
-    lines.push("");
-  }
-  return lines.join("\n");
-}
-
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
@@ -163,7 +61,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "week must be 'current', 'previous', or 'weekXX'" }, { status: 400 });
   }
 
-  // Resolve group: accept groupId (slashwork ID) or group (name) for backwards compat
   let slashworkId: string;
   let groupLabel: string;
 
@@ -182,7 +79,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "groupId or group is required" }, { status: 400 });
   }
 
-  // Get an auth token to use for the API call
   const authTokens = await getAuthTokens();
   if (authTokens.length === 0) {
     return NextResponse.json({ error: "No auth tokens configured" }, { status: 500 });
@@ -197,75 +93,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "SLASHWORK_GRAPHQL_URL not configured" }, { status: 500 });
   }
 
-  // Fetch posts from Slashwork with pagination
   const { start, end, label } = computeWeekRange(week);
-  const weekPosts: PostNode[] = [];
-  let cursor: string | null = null;
-  const MAX_PAGES = 10; // safety limit
-
-  for (let page = 0; page < MAX_PAGES; page++) {
-    const variables: Record<string, unknown> = { groupId: slashworkId, first: 100 };
-    if (cursor) variables.after = cursor;
-
-    const response = await fetch(graphqlUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`,
-      },
-      body: JSON.stringify({ query: FETCH_POSTS_QUERY, variables }),
-    });
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: `Slashwork API error: ${response.status}` },
-        { status: 502 },
-      );
-    }
-
-    const result = (await response.json()) as FetchResponse;
-    if (result.errors?.length) {
-      return NextResponse.json(
-        { error: `GraphQL error: ${result.errors.map((e) => e.message).join(", ")}` },
-        { status: 502 },
-      );
-    }
-
-    const posts = result.data?.fetch__Group?.posts;
-    const nodes = posts?.edges?.map((e) => e.node) ?? [];
-
-    if (nodes.length === 0) break;
-
-    // Collect posts within the target week
-    for (const post of nodes) {
-      if (post.created >= start && post.created <= end) {
-        weekPosts.push(post);
-      }
-    }
-
-    // Posts are ordered newest-first. If the oldest post in this page
-    // is older than the week start, we've gone far enough.
-    const oldestInPage = nodes[nodes.length - 1]!.created;
-    if (oldestInPage < start) break;
-
-    // No more pages
-    if (!posts?.pageInfo?.hasNextPage) break;
-    cursor = posts?.pageInfo?.endCursor ?? null;
-    if (!cursor) break;
-  }
-
-  if (weekPosts.length === 0) {
-    return NextResponse.json({
-      summary: `No posts found in '${groupLabel}' for ${label}.`,
-      postCount: 0,
-      weekLabel: label,
-    });
-  }
-
-  // Format and summarize
-  const formatted = formatPosts(weekPosts);
 
   try {
+    const weekPosts = await fetchGroupPosts(graphqlUrl, authToken, slashworkId, start, end);
+
+    if (weekPosts.length === 0) {
+      return NextResponse.json({
+        summary: `No posts found in '${groupLabel}' for ${label}.`,
+        postCount: 0,
+        weekLabel: label,
+      });
+    }
+
+    const formatted = formatPosts(weekPosts);
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });

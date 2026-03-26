@@ -5,6 +5,7 @@ import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
 import { startGroupSyncPoller } from "@/src/slashwork-sync";
+import { startWeeklyDigestPoller } from "@/src/weekly-digest";
 
 function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
@@ -40,6 +41,9 @@ export async function register() {
         log,
       );
       log("info", "Group sync: poller started (24h interval)");
+
+      startWeeklyDigestPoller(config.slashwork.graphqlUrl, log);
+      log("info", "Weekly digest: poller started (hourly check, posts Thu 2pm UTC)");
     }
   } catch (err) {
     log("error", `Failed to load routes from DB: ${err}`);
