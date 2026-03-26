@@ -16,8 +16,32 @@ interface DigestConfig {
 
 interface DigestFormProps {
   groups: GroupOption[];
+  groupCount: number;
   authTokenNames: string[];
   initialConfig: DigestConfig | null;
+}
+
+function nextThursday2pm(): Date {
+  const now = new Date();
+  const day = now.getUTCDay();
+  let daysToThu = (4 - day + 7) % 7;
+  // If today is Thursday but past 14:00, next week
+  if (daysToThu === 0 && now.getUTCHours() >= 14) daysToThu = 7;
+  // If today is Thursday before 14:00, it's today
+  return new Date(Date.UTC(
+    now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysToThu, 14, 0,
+  ));
+}
+
+function formatDuration(startIso: string, endIso: string): string {
+  const ms = new Date(endIso).getTime() - new Date(startIso).getTime();
+  if (ms <= 0) return "invalid range";
+  const hours = Math.floor(ms / 3600000);
+  const days = Math.floor(hours / 24);
+  const remainingHours = hours % 24;
+  if (days === 0) return `${hours} hours`;
+  if (remainingHours === 0) return `${days} day${days !== 1 ? "s" : ""}`;
+  return `${days} day${days !== 1 ? "s" : ""}, ${remainingHours} hour${remainingHours !== 1 ? "s" : ""}`;
 }
 
 function defaultWindowStart(): string {
@@ -54,7 +78,7 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function DigestForm({ groups, authTokenNames, initialConfig }: DigestFormProps) {
+export default function DigestForm({ groups, groupCount, authTokenNames, initialConfig }: DigestFormProps) {
   // Config state
   const [targetGroupId, setTargetGroupId] = useState(initialConfig?.targetGroupId ?? groups[0]?.slashworkId ?? "");
   const [postAs, setPostAs] = useState(initialConfig?.authToken ?? authTokenNames[0] ?? "");
@@ -196,15 +220,39 @@ export default function DigestForm({ groups, authTokenNames, initialConfig }: Di
             {saveStatus === "success" && <span className="dig-status dig-status--ok">Saved</span>}
             {saveStatus === "error" && <span className="dig-status dig-status--err">{saveError}</span>}
           </div>
-          <div className="dig-config-info">
-            <span>
-              {enabled
-                ? `Auto-post: Every Thursday at 2pm UTC → ${targetGroupName}`
-                : "Auto-post: Disabled"}
-            </span>
-            {initialConfig?.lastRunAt && (
-              <span>Last run: {formatDate(initialConfig.lastRunAt)}</span>
-            )}
+          <div className="dig-status-card">
+            <div className="dig-status-row">
+              <span className="dig-status-key">Schedule</span>
+              <span className="dig-status-val">
+                {enabled
+                  ? <><span className="dig-dot dig-dot--on" /> Every Thursday at 2:00 PM UTC</>
+                  : <><span className="dig-dot dig-dot--off" /> Disabled</>}
+              </span>
+            </div>
+            <div className="dig-status-row">
+              <span className="dig-status-key">Next run</span>
+              <span className="dig-status-val">
+                {enabled ? formatDate(nextThursday2pm().toISOString()) : "—"}
+              </span>
+            </div>
+            <div className="dig-status-row">
+              <span className="dig-status-key">Last run</span>
+              <span className="dig-status-val">
+                {initialConfig?.lastRunAt ? formatDate(initialConfig.lastRunAt) : "Never"}
+              </span>
+            </div>
+            <div className="dig-status-row">
+              <span className="dig-status-key">Target</span>
+              <span className="dig-status-val">{targetGroupName}</span>
+            </div>
+            <div className="dig-status-row">
+              <span className="dig-status-key">Post as</span>
+              <span className="dig-status-val">{postAs}</span>
+            </div>
+            <div className="dig-status-row">
+              <span className="dig-status-key">Groups to scan</span>
+              <span className="dig-status-val">{groupCount}</span>
+            </div>
           </div>
         </form>
       </div>
@@ -221,6 +269,11 @@ export default function DigestForm({ groups, authTokenNames, initialConfig }: Di
             <label htmlFor="dig-end">To</label>
             <input id="dig-end" type="datetime-local" value={windowEnd} onChange={(e) => setWindowEnd(e.target.value)} />
           </div>
+        </div>
+
+        <div className="dig-window-info">
+          <span>{formatDuration(windowStart, windowEnd)} window</span>
+          <span>{groupCount} groups will be scanned</span>
         </div>
 
         <div className="dig-field">

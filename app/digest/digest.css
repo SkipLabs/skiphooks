@@ -201,13 +201,68 @@
   margin-bottom: 0.75rem;
 }
 
-.dig-config-info {
+/* Status card */
+.dig-status-card {
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dig-status-row {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  padding: 0.4375rem 0.75rem;
+  border-bottom: 1px solid var(--cfg-border-subtle);
+}
+
+.dig-status-row:last-child {
+  border-bottom: none;
+}
+
+.dig-status-key {
   font-family: var(--cfg-mono);
   font-size: 0.6875rem;
   color: var(--cfg-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: 8rem;
+  flex-shrink: 0;
+}
+
+.dig-status-val {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-text);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.dig-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dig-dot--on {
+  background: var(--cfg-green);
+  box-shadow: 0 0 4px var(--cfg-green);
+}
+
+.dig-dot--off {
+  background: var(--cfg-text-dim);
+}
+
+/* Window info */
+.dig-window-info {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 0.75rem;
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-text-muted);
 }
 
 .dig-status {

@@ -33,6 +33,7 @@ export default async function DigestPage() {
 
         <DigestForm
           groups={groups}
+          groupCount={groups.length}
           authTokenNames={authTokens.map((t) => t.name)}
           initialConfig={digestConfig ? {
             targetGroupId: digestConfig.targetGroupId,
