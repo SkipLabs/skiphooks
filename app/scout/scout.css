@@ -47,6 +47,48 @@
   font-size: 0.6875rem;
 }
 
+.scout-warnings-hint {
+  color: var(--cfg-text-dim);
+  font-size: 0.6875rem;
+  font-style: italic;
+}
+
+.scout-warnings-steps {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.scout-warnings-steps-title {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--cfg-text-muted);
+  margin: 0 0 0.375rem;
+}
+
+.scout-warnings-steps ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.scout-warnings-steps li {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-text-dim);
+}
+
+.scout-warnings-steps code {
+  color: var(--cfg-text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 0.0625rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.625rem;
+}
+
 /* Stats bar */
 .scout-stats {
   display: flex;

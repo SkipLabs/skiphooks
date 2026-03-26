@@ -58,10 +58,10 @@ export default async function ScoutPage() {
         {warnings.length > 0 && (
           <div className="scout-warnings">
             <div className="scout-warnings-title">
-              Missing environment variables
+              Setup required
             </div>
             <p className="scout-warnings-desc">
-              The scout pipeline cannot run until these are configured.
+              The scout pipeline cannot run until the following environment variables are configured.
               {!dbAvailable && " Dashboard data is unavailable without a database connection."}
             </p>
             <ul className="scout-warnings-list">
@@ -69,9 +69,26 @@ export default async function ScoutPage() {
                 <li key={w.variable}>
                   <code>{w.variable}</code>
                   <span> &mdash; {w.label}</span>
+                  <span className="scout-warnings-hint">
+                    {w.variable === "REDDIT_CLIENT_ID" || w.variable === "REDDIT_CLIENT_SECRET"
+                      ? " (create an app at reddit.com/prefs/apps)"
+                      : w.variable === "ANTHROPIC_API_KEY"
+                        ? " (get a key at console.anthropic.com)"
+                        : w.variable === "POSTGRESQL_ADDON_URI"
+                          ? " (e.g. postgresql://user:pass@host:5432/dbname)"
+                          : ""}
+                  </span>
                 </li>
               ))}
             </ul>
+            <div className="scout-warnings-steps">
+              <p className="scout-warnings-steps-title">To get started:</p>
+              <ol>
+                <li>Add the missing variables to your <code>.env</code> file</li>
+                <li>Restart the server (<code>bun run dev</code>)</li>
+                <li>Configure the pipeline below with your target subreddits</li>
+              </ol>
+            </div>
           </div>
         )}
 
