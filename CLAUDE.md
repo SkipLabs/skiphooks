@@ -4,79 +4,100 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Skiphooks is a GitHub webhook server that forwards repository events (PRs, issues, pushes, releases, comments) to Slashwork streams via GraphQL. Built with Bun — no Node.js, no Express, no runtime dependencies.
+Skiphooks is a Next.js 15 full-stack app that:
+1. Receives GitHub webhooks and forwards them to Slashwork groups via GraphQL
+2. Provides AI-powered weekly summaries and cross-group digests (Anthropic Claude)
+3. Auto-discovers Slashwork groups and syncs them to a local DB
+4. Polls Google Calendar for event reminders
 
 ## Commands
 
 ```sh
-bun install          # Install dependencies
-bun run dev          # Dev server with --watch
-bun run start        # Production server
-bun test             # Run all tests
-bun test --filter "handler"  # Run specific tests
-bunx tsc --noEmit    # Type-check without emitting
-./test-webhook.sh skipper     # Send test webhook to a route
-./test-webhook.sh skjs http://localhost:3000  # Custom base URL
+bun install                             # Install dependencies
+bun run dev                             # Next.js dev server
+bun run build                           # Production build
+bun test                                # Run all tests
+bun test --filter "handler"             # Match test file name
+bun test src/calendar/calendar.test.ts  # Run single file
+bunx tsc --noEmit                       # Type-check without emitting
+./test-webhook.sh skipper               # Send test webhook to a route
+./summarize-group.sh skjs week10        # CLI: summarize a group's week
 ```
 
 ## Bun Rules
 
 Default to Bun for everything. Bun auto-loads `.env` — don't use dotenv.
 
-- `Bun.serve()` for HTTP — don't use Express
 - `bun:test` for testing — don't use Jest/Vitest
-- `Bun.file` over `node:fs` readFile/writeFile
 - `bun install` / `bun run` / `bunx` — not npm/yarn/npx
 
 ## Architecture
 
-**Request flow:** `Bun.serve() → route match → signature verify → handler dispatch → format markdown → GraphQL post`
+### Next.js App (`app/`)
 
-### Entry point: `src/index.ts`
+Pages and API routes live in `app/`. Clerk auth protects all pages except webhooks and health check.
 
-`Bun.serve()` matches URLs via regex `/github/<route-name>`. Routes are defined in root `config.ts`. On each request: verify HMAC-SHA256 signature, look up handler by `x-github-event` header, check action relevance, format to markdown, POST to Slashwork GraphQL.
+**Pages:**
+- `/slashwork` — Database state viewer (auth tokens, groups, routes, discovered groups, digest status)
+- `/summary` — Per-group weekly summary with AI (pick group, week, prompt → summarize → publish)
+- `/digest` — Cross-group weekly digest (config, manual trigger, auto-post toggle)
+- `/scout` — Reddit Scout dashboard
 
-### Config: root `config.ts` + `src/config.ts`
+**API routes:**
+- `POST /github/[route]` — GitHub webhook receiver (signature verify → handler → Slashwork post)
+- `POST /api/summary` — Generate single-group summary (accepts `groupId` or `group` name)
+- `POST /api/summary/publish` — Publish summary to a group
+- `GET/PUT /api/digest/config` — Digest configuration
+- `POST /api/digest/run` — Generate cross-group digest
+- `POST /api/digest/publish` — Publish digest to configured target group
+- `GET /health` — Health check
 
-Two-level config system:
-- **`src/config.ts`** — types (`SkiphooksConfig`, `GroupConfig`, `RouteConfig`) and `loadConfig()` with validation
-- **Root `config.ts`** — runtime config instance with actual values
+### Database (`src/db.ts` + `migrations/`)
 
-Routes support two modes:
-- **Group-based:** `{ group: "skipper" }` — references a named group in `config.groups` that provides `id` and `authToken`
-- **Direct stream:** `{ streamId: "...", authToken: "..." }` — standalone stream config
+PostgreSQL via `pg` library. Connection string: `POSTGRESQL_ADDON_URI`. Migrations run automatically on startup via `instrumentation.ts`.
 
-### Handlers: `src/handlers/`
+**Tables:** `auth_tokens`, `groups`, `routes`, `slashwork_groups` (discovered), `weekly_digest_config`, `calendar_users`, plus Scout tables.
 
-Each handler implements `EventHandler` interface (`types.ts`):
-- `isRelevantAction(action?)` — filters which GitHub actions to process
-- `format(payload)` — returns `{ markdown: string }` for Slashwork
+Key functions: `resolveRouteFromDb()`, `getGroups()`, `getAuthToken()`, `getDiscoveredGroups()`, `getDigestConfig()`, `upsertDigestConfig()`
 
-Handlers: `pull-request.ts`, `issues.ts`, `issue-comment.ts`, `push.ts`, `release.ts`
+### Webhook Flow
 
-### Slashwork client: `src/slashwork.ts`
+`POST /github/[route]` → `resolveRouteFromDb(routeName)` → verify HMAC-SHA256 signature → look up handler by `x-github-event` → format to markdown → `postToSlashwork()`
 
-GraphQL client with Bearer token auth. `postToSlashwork()` sends formatted markdown to a target stream/group. `validateConnection()` checks auth on startup.
+### Handlers (`src/handlers/`)
 
-### Webhook verification: `src/webhook.ts`
+Each implements `EventHandler` interface: `isRelevantAction(action?)` + `format(payload) → { markdown }`. Handlers: `pull-request.ts`, `issues.ts`, `issue-comment.ts`, `push.ts`, `release.ts`.
 
-HMAC-SHA256 signature verification using `node:crypto.timingSafeEqual`. Compares `x-hub-signature-256` header against computed hash.
+### Slashwork Client (`src/slashwork.ts`)
 
-### Calendar integration: `src/calendar/`
+GraphQL client with Bearer token auth. `postToSlashwork(connection, streamId, markdown)`. `validateConnection()` checks auth on startup.
 
-Google Calendar polling feature that posts upcoming event reminders to Slashwork streams.
+### Summary & Digest (`src/summary-utils.ts`, `src/weekly-digest.ts`)
 
-- `auth.ts` — JWT creation + Google OAuth token exchange with 5-minute-buffer caching
-- `poller.ts` — Polls calendars at intervals, deduplicates via event keys, hourly cleanup
-- `fetch-events.ts` — Google Calendar API v3 calls
-- `format.ts` — Markdown formatting with video link extraction, HTML stripping
-- `types.ts` — Types matching Google Calendar API response
+Shared utilities for fetching and formatting Slashwork posts:
+- `fetchGroupPosts(graphqlUrl, authToken, groupId, start, end)` — paginated post fetcher (up to 10 pages of 100)
+- `formatPosts(posts)` — hierarchical text formatting (post → comments → replies)
+- `generateDigest()` — per-group summaries via Haiku, then meta-summary
+- `computeDigestWindow()` — Thursday 2pm UTC → next Thursday 2pm UTC
 
-Calendar config lives in root `config.ts` under `calendar` key. Requires `GOOGLE_SERVICE_ACCOUNT_KEY` env var (full JSON).
+### Pollers (`instrumentation.ts`)
+
+Three background tasks started on app boot:
+1. **Route validation** — validates all Slashwork auth tokens
+2. **Group sync** (`src/slashwork-sync.ts`) — discovers all Slashwork groups via `groupSearch` API every 24h
+3. **Weekly digest** (`src/weekly-digest.ts`) — checks hourly, auto-posts digest every Thursday at 2pm UTC
+
+### Calendar (`src/calendar/`)
+
+Google Calendar polling that posts event reminders. Config from DB (`calendar_users` table). Requires `GOOGLE_SERVICE_ACCOUNT_KEY` env var.
+
+### Config (`src/config.ts`)
+
+`loadAppConfig()` loads `GITHUB_WEBHOOK_SECRET` and `SLASHWORK_GRAPHQL_URL`. Calendar and Scout configs are separate.
 
 ## Tests
 
-Test files live next to source: `src/handlers/handlers.test.ts`, `src/webhook.test.ts`, `src/calendar/calendar.test.ts`. Pattern: import `{ test, expect, describe }` from `"bun:test"`.
+Test files live next to source. Pattern: `import { test, expect, describe } from "bun:test"`.
 
 ```sh
 bun test                              # All tests
@@ -84,26 +105,27 @@ bun test --filter "handler"           # Match test file name
 bun test src/calendar/calendar.test.ts  # Run single file
 ```
 
-## Error Response Patterns
-
-- Missing/invalid signature → 401
-- Missing headers or unknown event → 200 OK (logged, not forwarded)
-- JSON parse failure → 200 OK (logged)
-- Request body limit: 1MB (`maxRequestBodySize`)
-
 ## Environment Variables
 
 See `.env.example`. Key vars:
-- `GITHUB_WEBHOOK_SECRET` — shared secret for webhook signature verification
+- `GITHUB_WEBHOOK_SECRET` — webhook signature verification
 - `SLASHWORK_GRAPHQL_URL` — GraphQL endpoint
-- `SLASHWORK_AUTH_TOKEN_SKIPPER` / `SLASHWORK_AUTH_TOKEN_SKJS` — per-group auth tokens
-- `GOOGLE_SERVICE_ACCOUNT_KEY` — service account JSON for calendar feature (optional)
+- `POSTGRESQL_ADDON_URI` — PostgreSQL connection string
+- `ANTHROPIC_API_KEY` — for AI summaries and digests (uses `claude-haiku-4-5`)
+- `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk auth
+- `GOOGLE_SERVICE_ACCOUNT_KEY` — calendar feature (optional)
 - `PORT` — server port (default 3000)
+
+Auth tokens for Slashwork groups are stored in the DB (`auth_tokens` table), not env vars.
 
 ## TypeScript
 
-Strict mode with `noUncheckedIndexedAccess: true`. Target ESNext with bundler module resolution. Type-check: `bunx tsc --noEmit`.
+Strict mode with `noUncheckedIndexedAccess: true`. Target ESNext with bundler module resolution. Path alias: `@/*` → project root.
 
 ## Deployment
 
-Clever Cloud via GitHub Actions (`.github/workflows/deploy.yml`). Push to `main` → typecheck + tests → force-push to Clever Cloud repo → auto-deploy.
+Clever Cloud via GitHub Actions (`.github/workflows/deploy.yml`). Push to `main` → build → typecheck → tests → force-push to Clever Cloud → auto-deploy. Migrations run automatically on each deploy via `instrumentation.ts`.
+
+## CSS Patterns
+
+Vanilla CSS with CSS variables (defined in `app/globals.css`). No component library. Each page has its own CSS file with a prefix: `sw-` (slashwork), `sum-` (summary), `dig-` (digest), `scout-` (scout), `nav-` (navigation).
