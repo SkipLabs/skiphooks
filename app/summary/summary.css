@@ -102,6 +102,38 @@
   border-color: var(--cfg-accent);
 }
 
+/* Prompt templates */
+.sum-templates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.sum-template-btn {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-text-muted);
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-border);
+  border-radius: 4px;
+  padding: 0.25rem 0.625rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.sum-template-btn:hover {
+  border-color: var(--cfg-text-dim);
+  color: var(--cfg-text);
+}
+
+.sum-template-btn--active {
+  border-color: var(--cfg-accent);
+  color: var(--cfg-accent);
+  background: var(--cfg-accent-dim);
+}
+
 .sum-prompt {
   font-family: var(--cfg-mono);
   font-size: 0.8125rem;

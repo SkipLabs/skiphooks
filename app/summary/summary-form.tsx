@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface GroupOption {
   name: string;
@@ -32,18 +32,52 @@ const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
   return { value: `week${pad}`, label };
 });
 
-const DEFAULT_PROMPT =
-  "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:";
+const PROMPT_TEMPLATES = [
+  {
+    name: "General summary",
+    prompt: "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:",
+  },
+  {
+    name: "Engineering highlights",
+    prompt: "Summarize the following messages focusing on engineering work: new features shipped, bugs fixed, technical decisions made, and infrastructure changes. Be concise and use bullet points:",
+  },
+  {
+    name: "Blockers & risks",
+    prompt: "Review the following messages and extract any blockers, risks, open questions, or unresolved issues. Group them by severity. If none are found, say so briefly:",
+  },
+  {
+    name: "Team wins",
+    prompt: "Review the following messages and highlight team wins, completed milestones, positive outcomes, and shipped features. Keep it upbeat and concise:",
+  },
+  {
+    name: "Action items",
+    prompt: "Extract all action items, follow-ups, and next steps from the following messages. List each with the responsible person if mentioned:",
+  },
+];
 
 export default function SummaryForm({ groups, configuredGroups, authTokenNames }: SummaryFormProps) {
   const [groupId, setGroupId] = useState(groups[0]?.slashworkId ?? "");
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
-  const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
+  const [prompt, setPrompt] = useState(PROMPT_TEMPLATES[0]!.prompt);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
   const [postCount, setPostCount] = useState<number | null>(null);
   const [weekLabel, setWeekLabel] = useState("");
   const [error, setError] = useState("");
+
+  // Elapsed time for loading
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [loading]);
 
   // Publish state
   const [publishGroupId, setPublishGroupId] = useState(groups[0]?.slashworkId ?? "");
@@ -165,6 +199,19 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
 
         </div>
 
+        <div className="sum-templates">
+          {PROMPT_TEMPLATES.map((t) => (
+            <button
+              key={t.name}
+              type="button"
+              className={`sum-template-btn${prompt === t.prompt ? " sum-template-btn--active" : ""}`}
+              onClick={() => setPrompt(t.prompt)}
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+
         <div className="sum-field">
           <label htmlFor="sum-prompt">Prompt</label>
           <textarea
@@ -194,7 +241,7 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
           <div className="sum-loading-dots">
             <span /><span /><span />
           </div>
-          <span>Summarizing...</span>
+          <span>Summarizing... {elapsed > 0 && `(${elapsed}s)`}</span>
         </div>
       )}
 
