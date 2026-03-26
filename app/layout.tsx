@@ -17,7 +17,7 @@ export default function RootLayout({
       <html lang="en">
         <body style={{ margin: 0, background: "#0c0c0e" }}>
           <NavMenu />
-          {children}
+          <div className="nav-main">{children}</div>
         </body>
       </html>
     </ClerkProvider>

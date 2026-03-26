@@ -1,3 +1,4 @@
+/* ── Burger button (mobile only) ── */
 .nav-burger {
   position: fixed;
   top: 0.75rem;
@@ -51,6 +52,7 @@
   transform: translateY(-5.5px) rotate(-45deg);
 }
 
+/* ── Backdrop (mobile only) ── */
 .nav-backdrop {
   position: fixed;
   inset: 0;
@@ -66,6 +68,7 @@
   pointer-events: auto;
 }
 
+/* ── Sidebar / Drawer ── */
 .nav-drawer {
   position: fixed;
   top: 0;
@@ -135,4 +138,29 @@
 
 .nav-auth {
   padding: 0 1.5rem;
+}
+
+/* ── Main content offset ── */
+.nav-main {
+  transition: margin-left 0.2s ease;
+}
+
+/* ── Desktop: sidebar always visible ── */
+@media (min-width: 768px) {
+  .nav-burger {
+    display: none;
+  }
+
+  .nav-backdrop {
+    display: none;
+  }
+
+  .nav-drawer {
+    transform: translateX(0);
+    padding-top: 0;
+  }
+
+  .nav-main {
+    margin-left: 16rem;
+  }
 }
