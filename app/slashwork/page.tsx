@@ -1,4 +1,5 @@
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
+import AdminActions, { DeleteButton } from "./admin-actions";
 import "./slashwork.css";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,12 @@ export default async function SlashworkPage() {
           <span className="sw-subtitle">database state</span>
         </div>
 
+        {/* Admin actions */}
+        <AdminActions
+          authTokenNames={authTokens.map((t) => t.name)}
+          groupNames={groups.map((g) => g.name)}
+        />
+
         <div className="sw-grid">
           {/* Auth Tokens */}
           <div className="sw-section">
@@ -34,12 +41,13 @@ export default async function SlashworkPage() {
                 <tr>
                   <th>Name</th>
                   <th>Token</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {authTokens.length === 0 ? (
                   <tr>
-                    <td colSpan={2} className="sw-empty">
+                    <td colSpan={3} className="sw-empty">
                       No auth tokens configured
                     </td>
                   </tr>
@@ -48,6 +56,9 @@ export default async function SlashworkPage() {
                     <tr key={t.name}>
                       <td>{t.name}</td>
                       <td className="sw-token">{t.tokenPreview}</td>
+                      <td className="sw-actions">
+                        <DeleteButton endpoint="/api/admin/tokens" name={t.name} label="token" />
+                      </td>
                     </tr>
                   ))
                 )}
@@ -102,12 +113,13 @@ export default async function SlashworkPage() {
                   <th>Type</th>
                   <th>Target</th>
                   <th>Auth Token</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {routes.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="sw-empty">
+                    <td colSpan={5} className="sw-empty">
                       No routes configured
                     </td>
                   </tr>
@@ -133,6 +145,9 @@ export default async function SlashworkPage() {
                         ) : (
                           r.authToken
                         )}
+                      </td>
+                      <td className="sw-actions">
+                        <DeleteButton endpoint="/api/admin/routes" name={r.name} label="route" />
                       </td>
                     </tr>
                   ))

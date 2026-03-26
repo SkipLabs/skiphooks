@@ -297,3 +297,40 @@ export async function updateDigestLastRun(): Promise<void> {
     "UPDATE weekly_digest_config SET last_run_at = now() WHERE id = 1",
   );
 }
+
+// Admin: auth token management
+
+export async function createAuthToken(name: string, token: string): Promise<void> {
+  await getPool().query(
+    "INSERT INTO auth_tokens (name, token) VALUES ($1, $2)",
+    [name, token],
+  );
+}
+
+export async function deleteAuthToken(name: string): Promise<boolean> {
+  const result = await getPool().query(
+    "DELETE FROM auth_tokens WHERE name = $1",
+    [name],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
+
+// Admin: route management
+
+export async function createRoute(
+  name: string,
+  opts: { groupName?: string; streamId?: string; authToken?: string },
+): Promise<void> {
+  await getPool().query(
+    "INSERT INTO routes (name, group_name, stream_id, auth_token) VALUES ($1, $2, $3, $4)",
+    [name, opts.groupName ?? null, opts.streamId ?? null, opts.authToken ?? null],
+  );
+}
+
+export async function deleteRoute(name: string): Promise<boolean> {
+  const result = await getPool().query(
+    "DELETE FROM routes WHERE name = $1",
+    [name],
+  );
+  return (result.rowCount ?? 0) > 0;
+}
