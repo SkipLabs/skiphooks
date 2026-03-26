@@ -2,33 +2,34 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { getAuthToken, getAuthTokens } from "@/src/db";
 import { generateDigest, computeDigestWindow } from "@/src/weekly-digest";
+import { apiError } from "@/src/api-error";
 
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   let body: { start?: string; end?: string; prompt?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return apiError("Invalid JSON", "INVALID_JSON", 400);
   }
 
   const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
   if (!graphqlUrl) {
-    return NextResponse.json({ error: "SLASHWORK_GRAPHQL_URL not configured" }, { status: 500 });
+    return apiError("SLASHWORK_GRAPHQL_URL not configured", "MISSING_CONFIG", 500);
   }
 
   // Get an auth token for API calls
   const authTokens = await getAuthTokens();
   if (authTokens.length === 0) {
-    return NextResponse.json({ error: "No auth tokens configured" }, { status: 500 });
+    return apiError("No auth tokens configured", "NO_AUTH_TOKENS", 500);
   }
   const token = await getAuthToken(authTokens[0]!.name);
   if (!token) {
-    return NextResponse.json({ error: "Failed to load auth token" }, { status: 500 });
+    return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
   }
 
   // Use provided window or default to last Thursday-Thursday
@@ -54,6 +55,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ error: `Digest generation failed: ${message}` }, { status: 502 });
+    return apiError(`Digest generation failed: ${message}`, "DIGEST_FAILED", 502);
   }
 }

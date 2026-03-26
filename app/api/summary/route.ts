@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getGroups, getAuthToken, getAuthTokens } from "@/src/db";
 import { fetchGroupPosts, formatPosts } from "@/src/summary-utils";
+import { apiError } from "@/src/api-error";
 
 function computeWeekRange(weekArg: string): { start: string; end: string; label: string } {
   const now = new Date();
@@ -46,19 +47,19 @@ function getISOWeek(date: Date): number {
 export async function POST(request: Request) {
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return apiError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
   let body: { groupId?: string; group?: string; week?: string; prompt?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    return apiError("Invalid JSON", "INVALID_JSON", 400);
   }
 
   const { week } = body;
   if (!week || !/^(current|previous|week\d{2})$/.test(week)) {
-    return NextResponse.json({ error: "week must be 'current', 'previous', or 'weekXX'" }, { status: 400 });
+    return apiError("week must be 'current', 'previous', or 'weekXX'", "INVALID_WEEK", 400);
   }
 
   let slashworkId: string;
@@ -71,26 +72,26 @@ export async function POST(request: Request) {
     const groups = await getGroups();
     const dbGroup = groups.find((g) => g.name === body.group);
     if (!dbGroup) {
-      return NextResponse.json({ error: `Group '${body.group}' not found` }, { status: 404 });
+      return apiError(`Group '${body.group}' not found`, "GROUP_NOT_FOUND", 404);
     }
     slashworkId = dbGroup.slashworkId;
     groupLabel = body.group;
   } else {
-    return NextResponse.json({ error: "groupId or group is required" }, { status: 400 });
+    return apiError("groupId or group is required", "MISSING_GROUP", 400);
   }
 
   const authTokens = await getAuthTokens();
   if (authTokens.length === 0) {
-    return NextResponse.json({ error: "No auth tokens configured" }, { status: 500 });
+    return apiError("No auth tokens configured", "NO_AUTH_TOKENS", 500);
   }
   const authToken = await getAuthToken(authTokens[0]!.name);
   if (!authToken) {
-    return NextResponse.json({ error: "Failed to load auth token" }, { status: 500 });
+    return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
   }
 
   const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
   if (!graphqlUrl) {
-    return NextResponse.json({ error: "SLASHWORK_GRAPHQL_URL not configured" }, { status: 500 });
+    return apiError("SLASHWORK_GRAPHQL_URL not configured", "MISSING_CONFIG", 500);
   }
 
   const { start, end, label } = computeWeekRange(week);
@@ -109,7 +110,7 @@ export async function POST(request: Request) {
     const formatted = formatPosts(weekPosts);
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "ANTHROPIC_API_KEY not configured" }, { status: 500 });
+      return apiError("ANTHROPIC_API_KEY not configured", "MISSING_CONFIG", 500);
     }
     const anthropic = new Anthropic({ apiKey });
     const aiResponse = await anthropic.messages.create({
@@ -133,9 +134,6 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { error: `Summarization failed: ${message}` },
-      { status: 502 },
-    );
+    return apiError(`Summarization failed: ${message}`, "SUMMARIZATION_FAILED", 502);
   }
 }

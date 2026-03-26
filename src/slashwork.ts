@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "./retry";
+
 const VIEWER_QUERY = `
   query Viewer {
     viewer { __typename }
@@ -20,7 +22,7 @@ export interface SlashworkConnection {
 export async function validateConnection(
   connection: SlashworkConnection,
 ): Promise<void> {
-  const response = await fetch(connection.graphqlUrl, {
+  const response = await fetchWithRetry(connection.graphqlUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -50,7 +52,7 @@ export async function postToSlashwork(
   streamId: string,
   markdown: string,
 ): Promise<void> {
-  const response = await fetch(connection.graphqlUrl, {
+  const response = await fetchWithRetry(connection.graphqlUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
