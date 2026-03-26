@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface GroupOption {
   name: string;
@@ -95,6 +95,20 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
   const [digest, setDigest] = useState("");
   const [digestMeta, setDigestMeta] = useState<{ groupCount: number; totalPosts: number } | null>(null);
   const [genError, setGenError] = useState("");
+
+  // Elapsed time for generation
+  const [elapsed, setElapsed] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (generating) {
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current);
+    }
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, [generating]);
 
   // Publish state
   const [publishing, setPublishing] = useState(false);
@@ -302,7 +316,7 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
         {generating && (
           <div className="dig-loading">
             <div className="dig-loading-dots"><span /><span /><span /></div>
-            <span>Generating digest across all groups...</span>
+            <span>Generating digest across all groups... {elapsed > 0 && `(${elapsed}s)`}</span>
           </div>
         )}
 

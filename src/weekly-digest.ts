@@ -116,6 +116,7 @@ export function startWeeklyDigestPoller(
 ): ReturnType<typeof setInterval> {
   const HOUR_MS = 60 * 60 * 1000;
   const SIX_DAYS_MS = 6 * 24 * 60 * 60 * 1000;
+  let running = false;
 
   return setInterval(async () => {
     const now = new Date();
@@ -123,6 +124,13 @@ export function startWeeklyDigestPoller(
     // Only run on Thursdays between 14:00-14:59 UTC
     if (now.getUTCDay() !== 4 || now.getUTCHours() !== 14) return;
 
+    // Guard against overlapping runs
+    if (running) {
+      log("warn", "Digest poller: previous run still in progress, skipping");
+      return;
+    }
+
+    running = true;
     try {
       const config = await getDigestConfig();
       if (!config || !config.enabled) return;
@@ -153,6 +161,8 @@ export function startWeeklyDigestPoller(
       log("info", "Digest poller: posted weekly digest successfully");
     } catch (err) {
       log("error", `Digest poller: ${err}`);
+    } finally {
+      running = false;
     }
   }, HOUR_MS);
 }
