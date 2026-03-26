@@ -4,6 +4,10 @@ import { issuesHandler } from "./issues";
 import { issueCommentHandler } from "./issue-comment";
 import { pushHandler } from "./push";
 import { releaseHandler } from "./release";
+import { workflowRunHandler } from "./workflow-run";
+import { deploymentStatusHandler } from "./deployment-status";
+import { pullRequestReviewHandler } from "./pull-request-review";
+import { checkSuiteHandler } from "./check-suite";
 
 // Pull Request handler
 
@@ -259,4 +263,173 @@ test("releaseHandler: shows prerelease and draft flags", () => {
 
   expect(markdown).toContain("pre-release");
   expect(markdown).toContain("draft");
+});
+
+// Workflow Run handler
+
+test("workflowRunHandler: filters irrelevant actions", () => {
+  expect(workflowRunHandler.isRelevantAction("completed")).toBe(true);
+  expect(workflowRunHandler.isRelevantAction("requested")).toBe(false);
+  expect(workflowRunHandler.isRelevantAction(undefined)).toBe(false);
+});
+
+test("workflowRunHandler: formats completed run", () => {
+  const { markdown } = workflowRunHandler.format({
+    action: "completed",
+    workflow_run: {
+      id: 123,
+      name: "CI",
+      html_url: "https://github.com/o/r/actions/runs/123",
+      conclusion: "success",
+      head_branch: "main",
+      head_sha: "abc1234567",
+      run_number: 42,
+      actor: { login: "alice" },
+      run_started_at: "2025-01-01T10:00:00Z",
+      updated_at: "2025-01-01T10:05:30Z",
+    },
+    repository: { full_name: "org/repo" },
+  });
+
+  expect(markdown).toContain("CI");
+  expect(markdown).toContain("#42");
+  expect(markdown).toContain("success");
+  expect(markdown).toContain("alice");
+  expect(markdown).toContain("`main`");
+  expect(markdown).toContain("5m 30s");
+  expect(markdown).toContain("View run");
+});
+
+test("workflowRunHandler: shows failure conclusion", () => {
+  const { markdown } = workflowRunHandler.format({
+    action: "completed",
+    workflow_run: {
+      id: 1,
+      html_url: "#",
+      conclusion: "failure",
+      head_branch: "feature",
+    },
+  });
+
+  expect(markdown).toContain("failure");
+});
+
+// Deployment Status handler
+
+test("deploymentStatusHandler: always relevant", () => {
+  expect(deploymentStatusHandler.isRelevantAction(undefined)).toBe(true);
+  expect(deploymentStatusHandler.isRelevantAction("created")).toBe(true);
+});
+
+test("deploymentStatusHandler: formats success deployment", () => {
+  const { markdown } = deploymentStatusHandler.format({
+    deployment_status: {
+      state: "success",
+      description: "Deployed successfully",
+      target_url: "https://app.example.com",
+    },
+    deployment: {
+      ref: "main",
+      environment: "production",
+      creator: { login: "alice" },
+    },
+    repository: { full_name: "org/repo" },
+  });
+
+  expect(markdown).toContain("production");
+  expect(markdown).toContain("success");
+  expect(markdown).toContain("alice");
+  expect(markdown).toContain("`main`");
+  expect(markdown).toContain("Deployed successfully");
+  expect(markdown).toContain("View deployment");
+});
+
+// Pull Request Review handler
+
+test("pullRequestReviewHandler: filters irrelevant actions", () => {
+  expect(pullRequestReviewHandler.isRelevantAction("submitted")).toBe(true);
+  expect(pullRequestReviewHandler.isRelevantAction("dismissed")).toBe(false);
+  expect(pullRequestReviewHandler.isRelevantAction(undefined)).toBe(false);
+});
+
+test("pullRequestReviewHandler: formats approval", () => {
+  const { markdown } = pullRequestReviewHandler.format({
+    action: "submitted",
+    review: {
+      state: "approved",
+      html_url: "https://github.com/o/r/pull/5#pullrequestreview-1",
+      body: "LGTM!",
+      user: { login: "bob" },
+    },
+    pull_request: {
+      number: 5,
+      title: "Add feature",
+      html_url: "https://github.com/o/r/pull/5",
+    },
+    repository: { full_name: "org/repo" },
+  });
+
+  expect(markdown).toContain("bob");
+  expect(markdown).toContain("approved");
+  expect(markdown).toContain("PR #5");
+  expect(markdown).toContain("LGTM!");
+});
+
+test("pullRequestReviewHandler: formats changes requested", () => {
+  const { markdown } = pullRequestReviewHandler.format({
+    action: "submitted",
+    review: {
+      state: "changes_requested",
+      html_url: "#",
+      user: { login: "carol" },
+    },
+    pull_request: {
+      number: 10,
+      title: "Refactor",
+      html_url: "#",
+    },
+  });
+
+  expect(markdown).toContain("changes requested");
+  expect(markdown).toContain("carol");
+});
+
+// Check Suite handler
+
+test("checkSuiteHandler: filters irrelevant actions", () => {
+  expect(checkSuiteHandler.isRelevantAction("completed")).toBe(true);
+  expect(checkSuiteHandler.isRelevantAction("requested")).toBe(false);
+  expect(checkSuiteHandler.isRelevantAction(undefined)).toBe(false);
+});
+
+test("checkSuiteHandler: formats completed check suite", () => {
+  const { markdown } = checkSuiteHandler.format({
+    action: "completed",
+    check_suite: {
+      conclusion: "success",
+      head_branch: "main",
+      head_sha: "abc1234567",
+      app: { name: "GitHub Actions", slug: "github-actions" },
+    },
+    repository: { full_name: "org/repo", html_url: "https://github.com/org/repo" },
+  });
+
+  expect(markdown).toContain("GitHub Actions");
+  expect(markdown).toContain("`main`");
+  expect(markdown).toContain("success");
+  expect(markdown).toContain("`abc1234`");
+});
+
+test("checkSuiteHandler: shows failure", () => {
+  const { markdown } = checkSuiteHandler.format({
+    action: "completed",
+    check_suite: {
+      conclusion: "failure",
+      head_branch: "feature",
+      head_sha: "def",
+    },
+    repository: { full_name: "o/r", html_url: "#" },
+  });
+
+  expect(markdown).toContain("failure");
 });

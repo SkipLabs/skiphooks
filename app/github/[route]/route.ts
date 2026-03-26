@@ -8,6 +8,10 @@ import { issuesHandler } from "@/src/handlers/issues";
 import { pushHandler } from "@/src/handlers/push";
 import { issueCommentHandler } from "@/src/handlers/issue-comment";
 import { releaseHandler } from "@/src/handlers/release";
+import { workflowRunHandler } from "@/src/handlers/workflow-run";
+import { deploymentStatusHandler } from "@/src/handlers/deployment-status";
+import { pullRequestReviewHandler } from "@/src/handlers/pull-request-review";
+import { checkSuiteHandler } from "@/src/handlers/check-suite";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +27,10 @@ const handlers: Record<EventType, EventHandler> = {
   issue_comment: issueCommentHandler,
   push: pushHandler,
   release: releaseHandler,
+  workflow_run: workflowRunHandler,
+  deployment_status: deploymentStatusHandler,
+  pull_request_review: pullRequestReviewHandler,
+  check_suite: checkSuiteHandler,
 };
 
 function log(level: string, message: string) {

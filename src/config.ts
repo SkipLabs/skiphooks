@@ -1,4 +1,4 @@
-export type EventType = "pull_request" | "issues" | "issue_comment" | "push" | "release";
+export type EventType = "pull_request" | "issues" | "issue_comment" | "push" | "release" | "workflow_run" | "deployment_status" | "pull_request_review" | "check_suite";
 
 export interface CalendarUserConfig {
   name: string;
