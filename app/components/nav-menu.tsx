@@ -28,6 +28,20 @@ export default function NavMenu() {
       />
 
       <nav className={`nav-drawer${open ? " nav-drawer--open" : ""}`}>
+        <Link href="/" className="nav-logo" onClick={() => setOpen(false)}>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28">
+            <defs>
+              <linearGradient id="nav-logo-g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor="#c4b5fd"/>
+                <stop offset="100%" stopColor="#7c3aed"/>
+              </linearGradient>
+            </defs>
+            <rect width="32" height="32" rx="6" fill="url(#nav-logo-g)"/>
+            <text x="16" y="22" textAnchor="middle" fontFamily="system-ui, sans-serif" fontWeight="700" fontSize="14" fill="#0c0c0e">S&#125;</text>
+          </svg>
+          <span>skiphooks</span>
+        </Link>
+
         <div className="nav-links">
           <Link href="/slashwork" className="nav-link" onClick={() => setOpen(false)}>
             <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
