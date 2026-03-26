@@ -28,19 +28,52 @@ export default function NavMenu() {
       />
 
       <nav className={`nav-drawer${open ? " nav-drawer--open" : ""}`}>
-        <Link href="/" className="nav-logo" onClick={() => setOpen(false)}>
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="28" height="28">
-            <defs>
-              <linearGradient id="nav-logo-g" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#c4b5fd"/>
-                <stop offset="100%" stopColor="#7c3aed"/>
-              </linearGradient>
-            </defs>
-            <rect width="32" height="32" rx="6" fill="url(#nav-logo-g)"/>
-            <text x="16" y="22" textAnchor="middle" fontFamily="system-ui, sans-serif" fontWeight="700" fontSize="14" fill="#0c0c0e">S&#125;</text>
-          </svg>
-          <span>skiphooks</span>
-        </Link>
+        <div
+          style={{
+            padding: "20px 20px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            borderBottom: "1px solid var(--cfg-border)",
+          }}
+        >
+          <Link
+            href="/"
+            onClick={() => setOpen(false)}
+            style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}
+          >
+            <div
+              className="nav-logo-icon"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 6,
+                background: "linear-gradient(135deg, #c4b5fd 0%, #7c3aed 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 14,
+                fontWeight: 700,
+                color: "#0c0c0e",
+                fontFamily: "var(--cfg-mono)",
+                letterSpacing: "-0.05em",
+              }}
+            >
+              S{"}"}
+            </div>
+            <span
+              style={{
+                fontFamily: "var(--cfg-mono)",
+                fontSize: 18,
+                fontWeight: 600,
+                color: "var(--cfg-text)",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Skiphooks
+            </span>
+          </Link>
+        </div>
 
         <div className="nav-links">
           <Link href="/slashwork" className="nav-link" onClick={() => setOpen(false)}>

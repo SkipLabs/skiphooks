@@ -79,33 +79,21 @@
   transition: transform 0.2s ease;
   display: flex;
   flex-direction: column;
-  padding: 4.5rem 0 1.5rem;
+  padding: 3.5rem 0 1.5rem;
 }
 
 .nav-drawer--open {
   transform: translateX(0);
 }
 
-.nav-logo {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0 1rem 0.75rem;
-  margin-bottom: 0.5rem;
-  border-bottom: 1px solid var(--cfg-border);
-  text-decoration: none;
+.nav-logo-icon {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform: rotate(-8deg);
 }
 
-.nav-logo svg {
-  flex-shrink: 0;
-}
-
-.nav-logo span {
-  font-family: var(--cfg-mono);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--cfg-text);
-  letter-spacing: 0.02em;
+.nav-logo-icon:hover {
+  transform: rotate(0deg);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.4);
 }
 
 .nav-links {
