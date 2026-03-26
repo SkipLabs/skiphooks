@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
-import { getGroups, getAuthToken } from "@/src/db";
+import { getGroups, getAuthToken, getAuthTokens } from "@/src/db";
 
 const FETCH_POSTS_QUERY = `
   query FetchGroupPosts($groupId: ID!, $first: Int!, $after: String) {
@@ -151,31 +151,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { group?: string; week?: string; prompt?: string };
+  let body: { groupId?: string; group?: string; week?: string; prompt?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { group, week } = body;
-  if (!group || typeof group !== "string") {
-    return NextResponse.json({ error: "group is required" }, { status: 400 });
-  }
+  const { week } = body;
   if (!week || !/^(current|previous|week\d{2})$/.test(week)) {
     return NextResponse.json({ error: "week must be 'current', 'previous', or 'weekXX'" }, { status: 400 });
   }
 
-  // Resolve group from DB
-  const groups = await getGroups();
-  const dbGroup = groups.find((g) => g.name === group);
-  if (!dbGroup) {
-    return NextResponse.json({ error: `Group '${group}' not found` }, { status: 404 });
+  // Resolve group: accept groupId (slashwork ID) or group (name) for backwards compat
+  let slashworkId: string;
+  let groupLabel: string;
+
+  if (body.groupId) {
+    slashworkId = body.groupId;
+    groupLabel = body.groupId;
+  } else if (body.group) {
+    const groups = await getGroups();
+    const dbGroup = groups.find((g) => g.name === body.group);
+    if (!dbGroup) {
+      return NextResponse.json({ error: `Group '${body.group}' not found` }, { status: 404 });
+    }
+    slashworkId = dbGroup.slashworkId;
+    groupLabel = body.group;
+  } else {
+    return NextResponse.json({ error: "groupId or group is required" }, { status: 400 });
   }
 
-  const authToken = await getAuthToken(dbGroup.authToken);
+  // Get an auth token to use for the API call
+  const authTokens = await getAuthTokens();
+  if (authTokens.length === 0) {
+    return NextResponse.json({ error: "No auth tokens configured" }, { status: 500 });
+  }
+  const authToken = await getAuthToken(authTokens[0]!.name);
   if (!authToken) {
-    return NextResponse.json({ error: `Auth token '${dbGroup.authToken}' not found` }, { status: 500 });
+    return NextResponse.json({ error: "Failed to load auth token" }, { status: 500 });
   }
 
   const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
@@ -190,7 +204,7 @@ export async function POST(request: Request) {
   const MAX_PAGES = 10; // safety limit
 
   for (let page = 0; page < MAX_PAGES; page++) {
-    const variables: Record<string, unknown> = { groupId: dbGroup.slashworkId, first: 100 };
+    const variables: Record<string, unknown> = { groupId: slashworkId, first: 100 };
     if (cursor) variables.after = cursor;
 
     const response = await fetch(graphqlUrl, {
@@ -242,7 +256,7 @@ export async function POST(request: Request) {
 
   if (weekPosts.length === 0) {
     return NextResponse.json({
-      summary: `No posts found in '${group}' for ${label}.`,
+      summary: `No posts found in '${groupLabel}' for ${label}.`,
       postCount: 0,
       weekLabel: label,
     });
@@ -263,7 +277,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nGroup: ${group} | ${label}\n\n${formatted}`,
+          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nGroup: ${groupLabel} | ${label}\n\n${formatted}`,
         },
       ],
     });

@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getGroups, getAuthToken } from "@/src/db";
+import { getAuthToken } from "@/src/db";
 import { postToSlashwork } from "@/src/slashwork";
 
 export async function POST(request: Request) {
@@ -9,17 +9,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { targetGroup?: string; authTokenName?: string; markdown?: string };
+  let body: { targetGroupId?: string; authTokenName?: string; markdown?: string };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const { targetGroup, authTokenName, markdown } = body;
-  if (!targetGroup || !authTokenName || !markdown) {
+  const { targetGroupId, authTokenName, markdown } = body;
+  if (!targetGroupId || !authTokenName || !markdown) {
     return NextResponse.json(
-      { error: "targetGroup, authTokenName, and markdown are required" },
+      { error: "targetGroupId, authTokenName, and markdown are required" },
       { status: 400 },
     );
   }
@@ -27,13 +27,6 @@ export async function POST(request: Request) {
   const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
   if (!graphqlUrl) {
     return NextResponse.json({ error: "SLASHWORK_GRAPHQL_URL not configured" }, { status: 500 });
-  }
-
-  // Resolve group
-  const groups = await getGroups();
-  const group = groups.find((g) => g.name === targetGroup);
-  if (!group) {
-    return NextResponse.json({ error: `Group '${targetGroup}' not found` }, { status: 404 });
   }
 
   // Resolve auth token
@@ -45,7 +38,7 @@ export async function POST(request: Request) {
   try {
     await postToSlashwork(
       { graphqlUrl, authToken: token },
-      group.slashworkId,
+      targetGroupId,
       markdown,
     );
     return NextResponse.json({ ok: true });

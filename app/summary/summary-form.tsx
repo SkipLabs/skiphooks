@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 
+interface GroupOption {
+  name: string;
+  slashworkId: string;
+}
+
 interface SummaryFormProps {
-  groups: string[];
+  groups: GroupOption[];
+  configuredGroups: string[];
   authTokenNames: string[];
 }
 
@@ -29,8 +35,8 @@ const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
 const DEFAULT_PROMPT =
   "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:";
 
-export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps) {
-  const [group, setGroup] = useState(groups[0] ?? "");
+export default function SummaryForm({ groups, configuredGroups, authTokenNames }: SummaryFormProps) {
+  const [groupId, setGroupId] = useState(groups[0]?.slashworkId ?? "");
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [loading, setLoading] = useState(false);
@@ -40,7 +46,7 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
   const [error, setError] = useState("");
 
   // Publish state
-  const [publishGroup, setPublishGroup] = useState(groups[0] ?? "");
+  const [publishGroupId, setPublishGroupId] = useState(groups[0]?.slashworkId ?? "");
   const [publishAs, setPublishAs] = useState(authTokenNames[0] ?? "");
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
@@ -58,7 +64,7 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
       const res = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ group, week, prompt: prompt.trim() || undefined }),
+        body: JSON.stringify({ groupId, week, prompt: prompt.trim() || undefined }),
       });
 
       const text = await res.text();
@@ -93,7 +99,7 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          targetGroup: publishGroup,
+          targetGroupId: publishGroupId,
           authTokenName: publishAs,
           markdown: summary,
         }),
@@ -129,14 +135,14 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
             <label htmlFor="sum-group">Group</label>
             <select
               id="sum-group"
-              value={group}
-              onChange={(e) => setGroup(e.target.value)}
+              value={groupId}
+              onChange={(e) => setGroupId(e.target.value)}
               disabled={groups.length === 0}
             >
               {groups.length === 0 && <option value="">No groups available</option>}
               {groups.map((g) => (
-                <option key={g} value={g}>
-                  {g}
+                <option key={g.slashworkId} value={g.slashworkId}>
+                  {g.name}
                 </option>
               ))}
             </select>
@@ -213,11 +219,11 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
                 <label htmlFor="sum-publish-group">Post to</label>
                 <select
                   id="sum-publish-group"
-                  value={publishGroup}
-                  onChange={(e) => setPublishGroup(e.target.value)}
+                  value={publishGroupId}
+                  onChange={(e) => setPublishGroupId(e.target.value)}
                 >
                   {groups.map((g) => (
-                    <option key={g} value={g}>{g}</option>
+                    <option key={g.slashworkId} value={g.slashworkId}>{g.name}</option>
                   ))}
                 </select>
               </div>
@@ -246,7 +252,7 @@ export default function SummaryForm({ groups, authTokenNames }: SummaryFormProps
             </div>
             {publishStatus === "success" && (
               <div className="sum-publish-status sum-publish-status--ok">
-                Published to {publishGroup}
+                Published successfully
               </div>
             )}
             {publishStatus === "error" && (

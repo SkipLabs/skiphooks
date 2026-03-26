@@ -1,4 +1,4 @@
-import { getGroups, getAuthTokens } from "@/src/db";
+import { getGroups, getAuthTokens, getDiscoveredGroups } from "@/src/db";
 import { hasDatabase } from "@/src/lib/config";
 import SummaryForm from "./summary-form";
 import "./summary.css";
@@ -7,9 +7,14 @@ export const dynamic = "force-dynamic";
 
 export default async function SummaryPage() {
   const dbAvailable = hasDatabase();
-  const [groups, authTokens] = dbAvailable
-    ? await Promise.all([getGroups(), getAuthTokens()])
-    : [[], []];
+  const [groups, authTokens, discoveredGroups] = dbAvailable
+    ? await Promise.all([getGroups(), getAuthTokens(), getDiscoveredGroups()])
+    : [[], [], []];
+
+  // Use discovered groups for the dropdown, filtering out unnamed ones
+  const allGroups = discoveredGroups
+    .filter((g) => g.name.length > 0)
+    .map((g) => ({ name: g.name, slashworkId: g.slashworkId }));
 
   return (
     <div className="sum-page">
@@ -28,7 +33,8 @@ export default async function SummaryPage() {
         )}
 
         <SummaryForm
-          groups={groups.map((g) => g.name)}
+          groups={allGroups}
+          configuredGroups={groups.map((g) => g.name)}
           authTokenNames={authTokens.map((t) => t.name)}
         />
       </main>
