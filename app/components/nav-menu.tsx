@@ -14,6 +14,7 @@ export default function NavMenu() {
         className={`nav-burger${open ? " nav-burger--open" : ""}`}
         onClick={() => setOpen(!open)}
         aria-label="Toggle navigation"
+        aria-expanded={open}
       >
         <div className="nav-burger-icon">
           <span />
@@ -25,6 +26,7 @@ export default function NavMenu() {
       <div
         className={`nav-backdrop${open ? " nav-backdrop--visible" : ""}`}
         onClick={() => setOpen(false)}
+        aria-hidden="true"
       />
 
       <nav className={`nav-drawer${open ? " nav-drawer--open" : ""}`}>

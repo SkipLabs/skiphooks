@@ -220,6 +220,8 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
               <button
                 type="button"
                 id="dig-enabled"
+                role="switch"
+                aria-checked={enabled}
                 className={`dig-toggle ${enabled ? "dig-toggle--on" : ""}`}
                 onClick={() => setEnabled(!enabled)}
               >
@@ -231,16 +233,18 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
             <button type="submit" className="dig-btn dig-btn--primary" disabled={saving}>
               {saving ? "Saving..." : "Save"}
             </button>
-            {saveStatus === "success" && <span className="dig-status dig-status--ok">Saved</span>}
-            {saveStatus === "error" && <span className="dig-status dig-status--err">{saveError}</span>}
+            <span aria-live="polite">
+              {saveStatus === "success" && <span className="dig-status dig-status--ok" role="status">Saved</span>}
+              {saveStatus === "error" && <span className="dig-status dig-status--err" role="alert">{saveError}</span>}
+            </span>
           </div>
           <div className="dig-status-card">
             <div className="dig-status-row">
               <span className="dig-status-key">Schedule</span>
               <span className="dig-status-val">
                 {enabled
-                  ? <><span className="dig-dot dig-dot--on" /> Every Thursday at 2:00 PM UTC</>
-                  : <><span className="dig-dot dig-dot--off" /> Disabled</>}
+                  ? <><span className="dig-dot dig-dot--on" aria-hidden="true" /> Every Thursday at 2:00 PM UTC</>
+                  : <><span className="dig-dot dig-dot--off" aria-hidden="true" /> Disabled</>}
               </span>
             </div>
             <div className="dig-status-row">
@@ -313,14 +317,16 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
           </button>
         </div>
 
-        {generating && (
-          <div className="dig-loading">
-            <div className="dig-loading-dots"><span /><span /><span /></div>
-            <span>Generating digest across all groups... {elapsed > 0 && `(${elapsed}s)`}</span>
-          </div>
-        )}
+        <div aria-live="polite">
+          {generating && (
+            <div className="dig-loading" role="status">
+              <div className="dig-loading-dots" aria-hidden="true"><span /><span /><span /></div>
+              <span>Generating digest across all groups... {elapsed > 0 && `(${elapsed}s)`}</span>
+            </div>
+          )}
+        </div>
 
-        {genError && <div className="dig-error">{genError}</div>}
+        {genError && <div className="dig-error" role="alert">{genError}</div>}
 
         {digest && (
           <div className="dig-result">
@@ -343,8 +349,10 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
               >
                 {publishing ? "Publishing..." : `Publish to ${targetGroupName}`}
               </button>
-              {publishStatus === "success" && <span className="dig-status dig-status--ok">Published</span>}
-              {publishStatus === "error" && <span className="dig-status dig-status--err">{publishError}</span>}
+              <span aria-live="polite">
+                {publishStatus === "success" && <span className="dig-status dig-status--ok" role="status">Published</span>}
+                {publishStatus === "error" && <span className="dig-status dig-status--err" role="alert">{publishError}</span>}
+              </span>
             </div>
           </div>
         )}

@@ -236,17 +236,19 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
         </div>
       </form>
 
-      {loading && (
-        <div className="sum-loading">
-          <div className="sum-loading-dots">
-            <span /><span /><span />
+      <div aria-live="polite">
+        {loading && (
+          <div className="sum-loading" role="status">
+            <div className="sum-loading-dots" aria-hidden="true">
+              <span /><span /><span />
+            </div>
+            <span>Summarizing... {elapsed > 0 && `(${elapsed}s)`}</span>
           </div>
-          <span>Summarizing... {elapsed > 0 && `(${elapsed}s)`}</span>
-        </div>
-      )}
+        )}
+      </div>
 
       {error && (
-        <div className="sum-error">{error}</div>
+        <div className="sum-error" role="alert">{error}</div>
       )}
 
       {summary && (
@@ -297,16 +299,18 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
                 </button>
               </div>
             </div>
-            {publishStatus === "success" && (
-              <div className="sum-publish-status sum-publish-status--ok">
-                Published successfully
-              </div>
-            )}
-            {publishStatus === "error" && (
-              <div className="sum-publish-status sum-publish-status--err">
-                {publishError}
-              </div>
-            )}
+            <div aria-live="polite">
+              {publishStatus === "success" && (
+                <div className="sum-publish-status sum-publish-status--ok" role="status">
+                  Published successfully
+                </div>
+              )}
+              {publishStatus === "error" && (
+                <div className="sum-publish-status sum-publish-status--err" role="alert">
+                  {publishError}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

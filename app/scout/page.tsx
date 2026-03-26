@@ -129,15 +129,15 @@ export default async function ScoutPage() {
               <h2 className="cfg-section-title">Recent Crawl Runs</h2>
               <span className="cfg-count">{crawlRuns.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="cfg-table" aria-label="Recent crawl runs">
               <thead>
                 <tr>
-                  <th>Started</th>
-                  <th>Subreddits</th>
-                  <th>Scanned</th>
-                  <th>Saved</th>
-                  <th>Comments</th>
-                  <th>Status</th>
+                  <th scope="col">Started</th>
+                  <th scope="col">Subreddits</th>
+                  <th scope="col">Scanned</th>
+                  <th scope="col">Saved</th>
+                  <th scope="col">Comments</th>
+                  <th scope="col">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -189,14 +189,14 @@ export default async function ScoutPage() {
               <h2 className="cfg-section-title">Saved Threads</h2>
               <span className="cfg-count">{threads.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="cfg-table" aria-label="Saved threads">
               <thead>
                 <tr>
-                  <th>Thread</th>
-                  <th>Subreddit</th>
-                  <th>Score</th>
-                  <th>Topics</th>
-                  <th>Saved</th>
+                  <th scope="col">Thread</th>
+                  <th scope="col">Subreddit</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Topics</th>
+                  <th scope="col">Saved</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,15 +248,15 @@ export default async function ScoutPage() {
               <h2 className="cfg-section-title">Pending Queue</h2>
               <span className="cfg-count">{queue.length}</span>
             </div>
-            <table className="cfg-table">
+            <table className="cfg-table" aria-label="Pending queue">
               <thead>
                 <tr>
-                  <th>Comment</th>
-                  <th>Thread</th>
-                  <th>Author</th>
-                  <th>Score</th>
-                  <th>Urgency</th>
-                  <th>Saved</th>
+                  <th scope="col">Comment</th>
+                  <th scope="col">Thread</th>
+                  <th scope="col">Author</th>
+                  <th scope="col">Score</th>
+                  <th scope="col">Urgency</th>
+                  <th scope="col">Saved</th>
                 </tr>
               </thead>
               <tbody>

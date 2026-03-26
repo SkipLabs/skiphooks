@@ -36,12 +36,12 @@ export default async function SlashworkPage() {
               <h2 className="sw-section-title">Auth Tokens</h2>
               <span className="sw-count">{authTokens.length}</span>
             </div>
-            <table className="sw-table">
+            <table className="sw-table" aria-label="Auth tokens">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Token</th>
-                  <th></th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Token</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -72,12 +72,12 @@ export default async function SlashworkPage() {
               <h2 className="sw-section-title">Groups</h2>
               <span className="sw-count">{groups.length}</span>
             </div>
-            <table className="sw-table">
+            <table className="sw-table" aria-label="Configured groups">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Slashwork ID</th>
-                  <th>Auth Token</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Slashwork ID</th>
+                  <th scope="col">Auth Token</th>
                 </tr>
               </thead>
               <tbody>
@@ -106,14 +106,14 @@ export default async function SlashworkPage() {
               <h2 className="sw-section-title">Routes</h2>
               <span className="sw-count">{routes.length}</span>
             </div>
-            <table className="sw-table">
+            <table className="sw-table" aria-label="Webhook routes">
               <thead>
                 <tr>
-                  <th>Endpoint</th>
-                  <th>Type</th>
-                  <th>Target</th>
-                  <th>Auth Token</th>
-                  <th></th>
+                  <th scope="col">Endpoint</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Target</th>
+                  <th scope="col">Auth Token</th>
+                  <th scope="col"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -163,12 +163,12 @@ export default async function SlashworkPage() {
                 <h2 className="sw-section-title">Calendar Users</h2>
                 <span className="sw-count">{calendarUsers.length}</span>
               </div>
-              <table className="sw-table">
+              <table className="sw-table" aria-label="Calendar users">
                 <thead>
                   <tr>
-                    <th>Name</th>
-                    <th>Calendar ID</th>
-                    <th>Target ID</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Calendar ID</th>
+                    <th scope="col">Target ID</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -189,14 +189,14 @@ export default async function SlashworkPage() {
               <h2 className="sw-section-title">Slashwork Groups (discovered)</h2>
               <span className="sw-count">{discoveredGroups.length}</span>
             </div>
-            <table className="sw-table">
+            <table className="sw-table" aria-label="Discovered Slashwork groups">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Slashwork ID</th>
-                  <th>First Seen</th>
-                  <th>Last Seen</th>
-                  <th>Status</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Slashwork ID</th>
+                  <th scope="col">First Seen</th>
+                  <th scope="col">Last Seen</th>
+                  <th scope="col">Status</th>
                 </tr>
               </thead>
               <tbody>
