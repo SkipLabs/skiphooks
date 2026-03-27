@@ -275,7 +275,7 @@ export async function getDigestConfig(): Promise<DigestConfig | null> {
     targetGroupId: row.target_group_id,
     authToken: row.auth_token,
     enabled: row.enabled,
-    lastRunAt: row.last_run_at,
+    lastRunAt: row.last_run_at ? new Date(row.last_run_at) : null,
   };
 }
 
