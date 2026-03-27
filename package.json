@@ -16,6 +16,11 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
     "@clerk/nextjs": "^7.0.4",
+    "@skip-adapter/postgres": "0.0.19",
+    "@skipruntime/core": "0.0.19",
+    "@skipruntime/helpers": "0.0.19",
+    "@skipruntime/server": "0.0.19",
+    "@skipruntime/wasm": "0.0.19",
     "@types/node": "^22",
     "@types/pg": "^8.18.0",
     "@types/react": "^19",
@@ -29,5 +34,8 @@
   },
   "devDependencies": {
     "@types/bun": "latest"
+  },
+  "patchedDependencies": {
+    "@skip-adapter/postgres@0.0.19": "patches/@skip-adapter%2Fpostgres@0.0.19.patch"
   }
 }

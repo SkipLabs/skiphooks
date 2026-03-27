@@ -1,0 +1,177 @@
+diff --git a/node_modules/@skip-adapter/postgres/.bun-tag-304b71641429d988 b/.bun-tag-304b71641429d988
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 848c4e798b38cc6df682f8e7ba274a1546497bf0..b6e871e255ddf851588597b4391da0e46246294e 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -23,6 +23,8 @@ export declare class PostgresExternalService implements ExternalService {
+     private client;
+     private open_instances;
+     isConnected(): boolean;
++    getClient(): import("pg").Client;
++    getOpenInstances(): Set<string>;
+     /**
+      * @param db_config - Configuration of database to which to connect.
+      * @param db_config.host - Host serving database.
+diff --git a/dist/index.js b/dist/index.js
+index 90565a5afc70414c92e41bb212495c1587d8ec63..a1584898708c626fc37afa2fc8643654556b11de 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -27,6 +27,12 @@ export class PostgresExternalService {
+     isConnected() {
+         return "_connected" in this.client && !!this.client._connected;
+     }
++    getClient() {
++        return this.client;
++    }
++    getOpenInstances() {
++        return new Set(this.open_instances);
++    }
+     /**
+      * @param db_config - Configuration of database to which to connect.
+      * @param db_config.host - Host serving database.
+@@ -38,6 +44,10 @@ export class PostgresExternalService {
+     constructor(db_config) {
+         this.open_instances = new Set();
+         this.client = new pg.Client(db_config);
++        this.client.on("error", (err) => {
++            console.error("[skip-pg-adapter] Client error — clearing open_instances so channels can be re-created:", err.message);
++            this.open_instances.clear();
++        });
+         this.client.connect().then(() => {
+             const handler = () => {
+                 void this.shutdown().then(() => process.exit());
+@@ -96,8 +106,8 @@ export class PostgresExternalService {
+         const setupPgNotify = async () => {
+             // Reuse existing trigger/function if possible
+             if (!this.open_instances.has(instance)) {
+-                this.open_instances.add(instance);
+-                await this.client.query(format(`
++                try {
++                    await this.client.query(format(`
+ CREATE OR REPLACE FUNCTION %I() RETURNS TRIGGER AS $f$
+ BEGIN
+   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+@@ -107,11 +117,18 @@ BEGIN
+   END IF;
+   RETURN NULL;
+ END $f$ LANGUAGE PLPGSQL;`, instance, instance, key.col, instance, key.col));
+-                await this.client.query(format(`LISTEN %I;`, instance));
+-                await this.client.query(format(`
++                    await this.client.query(format(`LISTEN %I;`, instance));
++                    await this.client.query(format(`
+ CREATE OR REPLACE TRIGGER %I
+ AFTER INSERT OR UPDATE OR DELETE ON %I
+ FOR EACH ROW EXECUTE FUNCTION %I();`, instance, table, instance));
++                    // Mark as set up ONLY after all queries succeed
++                    this.open_instances.add(instance);
++                    console.log(`[skip-pg-adapter] setupPgNotify OK: instance=${instance} table=${table} key=${key.col}`);
++                }
++                catch (err) {
++                    console.error(`[skip-pg-adapter] setupPgNotify FAILED for instance=${instance} table=${table}:`, err);
++                }
+             }
+         };
+         await initData();
+diff --git a/src/index.ts b/src/index.ts
+index f343b38302446fc2c5f9172f21e31fe68f0390b0..a83dbe705dcc7c0d58ff9d17dc7c02b4676f6f84 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -37,6 +37,14 @@ export class PostgresExternalService implements ExternalService {
+     return "_connected" in this.client && !!this.client._connected;
+   }
+ 
++  getClient(): pg.Client {
++    return this.client;
++  }
++
++  getOpenInstances(): Set<string> {
++    return new Set(this.open_instances);
++  }
++
+   /**
+    * @param db_config - Configuration of database to which to connect.
+    * @param db_config.host - Host serving database.
+@@ -53,6 +61,13 @@ export class PostgresExternalService implements ExternalService {
+     password: string;
+   }) {
+     this.client = new pg.Client(db_config);
++    this.client.on("error", (err: Error) => {
++      console.error(
++        "[skip-pg-adapter] Client error — clearing open_instances so channels can be re-created:",
++        err.message,
++      );
++      this.open_instances.clear();
++    });
+     this.client.connect().then(
+       () => {
+         const handler = () => {
+@@ -133,10 +148,10 @@ export class PostgresExternalService implements ExternalService {
+     const setupPgNotify = async () => {
+       // Reuse existing trigger/function if possible
+       if (!this.open_instances.has(instance)) {
+-        this.open_instances.add(instance);
+-        await this.client.query(
+-          format(
+-            `
++        try {
++          await this.client.query(
++            format(
++              `
+ CREATE OR REPLACE FUNCTION %I() RETURNS TRIGGER AS $f$
+ BEGIN
+   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
+@@ -146,25 +161,36 @@ BEGIN
+   END IF;
+   RETURN NULL;
+ END $f$ LANGUAGE PLPGSQL;`,
+-            instance,
+-            instance,
+-            key.col,
+-            instance,
+-            key.col,
+-          ),
+-        );
+-        await this.client.query(format(`LISTEN %I;`, instance));
+-        await this.client.query(
+-          format(
+-            `
++              instance,
++              instance,
++              key.col,
++              instance,
++              key.col,
++            ),
++          );
++          await this.client.query(format(`LISTEN %I;`, instance));
++          await this.client.query(
++            format(
++              `
+ CREATE OR REPLACE TRIGGER %I
+ AFTER INSERT OR UPDATE OR DELETE ON %I
+ FOR EACH ROW EXECUTE FUNCTION %I();`,
+-            instance,
+-            table,
+-            instance,
+-          ),
+-        );
++              instance,
++              table,
++              instance,
++            ),
++          );
++          // Mark as set up ONLY after all queries succeed
++          this.open_instances.add(instance);
++          console.log(
++            `[skip-pg-adapter] setupPgNotify OK: instance=${instance} table=${table} key=${key.col}`,
++          );
++        } catch (err) {
++          console.error(
++            `[skip-pg-adapter] setupPgNotify FAILED for instance=${instance} table=${table}:`,
++            err,
++          );
++        }
+       }
+     };
+ 

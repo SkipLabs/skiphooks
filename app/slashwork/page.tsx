@@ -1,5 +1,6 @@
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
 import AdminActions, { DeleteButton } from "./admin-actions";
+import DiscoveredGroupsLive from "./discovered-groups-live";
 import "./slashwork.css";
 
 export const dynamic = "force-dynamic";
@@ -183,56 +184,16 @@ export default async function SlashworkPage() {
               </table>
             </div>
           )}
-          {/* Discovered Slashwork Groups */}
-          <div className="sw-section sw-section--wide">
-            <div className="sw-section-header">
-              <h2 className="sw-section-title">Slashwork Groups (discovered)</h2>
-              <span className="sw-count">{discoveredGroups.length}</span>
-            </div>
-            <table className="sw-table" aria-label="Discovered Slashwork groups">
-              <thead>
-                <tr>
-                  <th scope="col">Name</th>
-                  <th scope="col">Slashwork ID</th>
-                  <th scope="col">First Seen</th>
-                  <th scope="col">Last Seen</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {discoveredGroups.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="sw-empty">
-                      No groups discovered yet — sync runs on startup and every 24h
-                    </td>
-                  </tr>
-                ) : (
-                  discoveredGroups.map((g) => {
-                    const configured = groups.some((cg) => cg.slashworkId === g.slashworkId);
-                    return (
-                      <tr key={g.slashworkId}>
-                        <td>{g.name || <span className="sw-muted">unnamed</span>}</td>
-                        <td className="sw-mono">{g.slashworkId}</td>
-                        <td className="sw-mono">
-                          {g.discoveredAt.toLocaleDateString()}
-                        </td>
-                        <td className="sw-mono">
-                          {g.lastSeenAt.toLocaleDateString()}
-                        </td>
-                        <td>
-                          {configured ? (
-                            <span className="sw-badge sw-badge--group">configured</span>
-                          ) : (
-                            <span className="sw-badge sw-badge--stream">unlinked</span>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+          {/* Discovered Slashwork Groups (live-streamed via Skip) */}
+          <DiscoveredGroupsLive
+            initialGroups={discoveredGroups.map((g) => ({
+              slashworkId: g.slashworkId,
+              name: g.name,
+              discoveredAt: g.discoveredAt.toISOString(),
+              lastSeenAt: g.lastSeenAt.toISOString(),
+            }))}
+            configuredGroupIds={groups.map((g) => g.slashworkId)}
+          />
         </div>
       </main>
     </div>

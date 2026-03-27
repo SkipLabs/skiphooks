@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  serverExternalPackages: [
+    "@skipruntime/wasm",
+    "@skipruntime/server",
+    "@skip-adapter/postgres",
+  ],
+};
 
 export default nextConfig;
