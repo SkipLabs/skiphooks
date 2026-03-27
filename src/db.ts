@@ -225,8 +225,8 @@ export async function getDiscoveredGroups(): Promise<DiscoveredGroup[]> {
   return result.rows.map((row) => ({
     slashworkId: row.slashwork_id,
     name: row.name,
-    discoveredAt: row.discovered_at,
-    lastSeenAt: row.last_seen_at,
+    discoveredAt: new Date(row.discovered_at),
+    lastSeenAt: new Date(row.last_seen_at),
   }));
 }
 
