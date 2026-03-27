@@ -53,6 +53,7 @@ export default function DiscoveredGroupsLive({
 
         eventSource.addEventListener("init", (e) => {
           const data = JSON.parse(e.data);
+          if (!Array.isArray(data.values)) return;
           const dbRows: DbSlashworkGroup[] = parseSkipEntries(data.values);
           setGroups(dbRows.map(dbToGroup));
           setConnected(true);
@@ -60,6 +61,7 @@ export default function DiscoveredGroupsLive({
 
         eventSource.addEventListener("update", (e) => {
           const data = JSON.parse(e.data);
+          if (!Array.isArray(data.values)) return;
           setGroups((prev) => {
             const dbCurrent = prev.map((g) => ({
               slashwork_id: g.slashworkId,
@@ -135,10 +137,10 @@ export default function DiscoveredGroupsLive({
                   <td>{g.name || <span className="sw-muted">unnamed</span>}</td>
                   <td className="sw-mono">{g.slashworkId}</td>
                   <td className="sw-mono">
-                    {new Date(g.discoveredAt).toLocaleDateString()}
+                    {g.discoveredAt.slice(0, 10)}
                   </td>
                   <td className="sw-mono">
-                    {new Date(g.lastSeenAt).toLocaleDateString()}
+                    {g.lastSeenAt.slice(0, 10)}
                   </td>
                   <td>
                     {configured ? (
