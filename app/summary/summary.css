@@ -176,6 +176,17 @@
   cursor: not-allowed;
 }
 
+.sum-submit--cancel {
+  color: var(--cfg-text-muted);
+  background: transparent;
+  border: 1px solid var(--cfg-border);
+}
+
+.sum-submit--cancel:hover {
+  border-color: var(--cfg-text-dim);
+  color: var(--cfg-text);
+}
+
 /* Loading */
 .sum-loading {
   margin-top: 1.25rem;

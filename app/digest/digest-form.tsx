@@ -99,6 +99,7 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
   // Elapsed time for generation
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (generating) {
@@ -139,6 +140,10 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
   }
 
   async function handleGenerate() {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setGenerating(true);
     setDigest("");
     setDigestMeta(null);
@@ -154,6 +159,7 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
           end: new Date(windowEnd).toISOString(),
           prompt: prompt.trim() || undefined,
         }),
+        signal: controller.signal,
       });
       const text = await res.text();
       const data = JSON.parse(text);
@@ -161,10 +167,16 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
       setDigest(data.markdown);
       setDigestMeta({ groupCount: data.groupCount, totalPosts: data.totalPosts });
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setGenError(err instanceof Error ? err.message : String(err));
     } finally {
       setGenerating(false);
     }
+  }
+
+  function handleCancelGenerate() {
+    abortRef.current?.abort();
+    setGenerating(false);
   }
 
   async function handlePublish() {
@@ -315,6 +327,11 @@ export default function DigestForm({ groups, groupCount, authTokenNames, initial
           >
             {generating ? "Generating..." : "Generate"}
           </button>
+          {generating && (
+            <button type="button" className="dig-btn dig-btn--outline" onClick={handleCancelGenerate}>
+              Cancel
+            </button>
+          )}
         </div>
 
         <div aria-live="polite">

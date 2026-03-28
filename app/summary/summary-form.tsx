@@ -68,6 +68,7 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
   // Elapsed time for loading
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (loading) {
@@ -88,6 +89,10 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setSummary("");
     setError("");
@@ -99,6 +104,7 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ groupId, week, prompt: prompt.trim() || undefined }),
+        signal: controller.signal,
       });
 
       const text = await res.text();
@@ -117,10 +123,16 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
       setPostCount(data.postCount as number);
       setWeekLabel(data.weekLabel as string);
     } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
+  }
+
+  function handleCancel() {
+    abortRef.current?.abort();
+    setLoading(false);
   }
 
   async function handlePublish() {
@@ -232,6 +244,11 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
             >
               {loading ? "Summarizing..." : "Summarize"}
             </button>
+            {loading && (
+              <button type="button" className="sum-submit sum-submit--cancel" onClick={handleCancel}>
+                Cancel
+              </button>
+            )}
           </div>
         </div>
       </form>
