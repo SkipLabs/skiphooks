@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 interface GroupOption {
   name: string;
@@ -20,17 +20,21 @@ function getISOWeek(date: Date): number {
   return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
 }
 
-const currentWeek = getISOWeek(new Date());
-const previousWeek = getISOWeek(new Date(Date.now() - 7 * 86400000));
-
-const WEEK_OPTIONS = Array.from({ length: 52 }, (_, i) => {
-  const num = i + 1;
-  const pad = String(num).padStart(2, "0");
-  let label = `Week ${pad}`;
-  if (num === currentWeek) label += " (current)";
-  else if (num === previousWeek) label += " (previous)";
-  return { value: `week${pad}`, label };
-});
+function buildWeekOptions() {
+  const current = getISOWeek(new Date());
+  const previous = getISOWeek(new Date(Date.now() - 7 * 86400000));
+  return {
+    currentWeek: current,
+    options: Array.from({ length: 52 }, (_, i) => {
+      const num = i + 1;
+      const pad = String(num).padStart(2, "0");
+      let label = `Week ${pad}`;
+      if (num === current) label += " (current)";
+      else if (num === previous) label += " (previous)";
+      return { value: `week${pad}`, label };
+    }),
+  };
+}
 
 const PROMPT_TEMPLATES = [
   {
@@ -56,6 +60,7 @@ const PROMPT_TEMPLATES = [
 ];
 
 export default function SummaryForm({ groups, configuredGroups, authTokenNames }: SummaryFormProps) {
+  const { currentWeek, options: WEEK_OPTIONS } = useMemo(buildWeekOptions, []);
   const [groupId, setGroupId] = useState(groups[0]?.slashworkId ?? "");
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
   const [prompt, setPrompt] = useState(PROMPT_TEMPLATES[0]!.prompt);
