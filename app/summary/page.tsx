@@ -1,8 +1,10 @@
 import { Suspense } from "react";
+import nextDynamic from "next/dynamic";
 import { getGroups, getAuthTokens, getDiscoveredGroups } from "@/src/db";
 import { hasDatabase } from "@/src/lib/config";
-import SummaryForm from "./summary-form";
 import "./summary.css";
+
+const SummaryForm = nextDynamic(() => import("./summary-form"), { ssr: false });
 
 export const dynamic = "force-dynamic";
 

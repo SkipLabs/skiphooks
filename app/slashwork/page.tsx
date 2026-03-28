@@ -1,11 +1,13 @@
 import { Suspense } from "react";
+import nextDynamic from "next/dynamic";
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
-import AdminActions from "./admin-actions";
 import AuthTokensLive from "./auth-tokens-live";
 import GroupsLive from "./groups-live";
 import RoutesLive from "./routes-live";
 import DiscoveredGroupsLive from "./discovered-groups-live";
 import "./slashwork.css";
+
+const AdminActions = nextDynamic(() => import("./admin-actions"), { ssr: false });
 
 export const dynamic = "force-dynamic";
 
