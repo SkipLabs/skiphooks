@@ -4,7 +4,7 @@ import { getAuthTokens, getDiscoveredGroups, getDigestConfig } from "@/src/db";
 import { hasDatabase } from "@/src/lib/config";
 import "./digest.css";
 
-const DigestForm = nextDynamic(() => import("./digest-form"), { ssr: false });
+const DigestForm = nextDynamic(() => import("./digest-form"));
 
 export const dynamic = "force-dynamic";
 

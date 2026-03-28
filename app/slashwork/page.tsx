@@ -8,7 +8,7 @@ import RoutesLive from "./routes-live";
 import DiscoveredGroupsLive from "./discovered-groups-live";
 import "./slashwork.css";
 
-const AdminActions = nextDynamic(() => import("./admin-actions"), { ssr: false });
+const AdminActions = nextDynamic(() => import("./admin-actions"));
 
 export const dynamic = "force-dynamic";
 

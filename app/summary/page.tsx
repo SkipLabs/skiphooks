@@ -4,7 +4,7 @@ import { getGroups, getAuthTokens, getDiscoveredGroups } from "@/src/db";
 import { hasDatabase } from "@/src/lib/config";
 import "./summary.css";
 
-const SummaryForm = nextDynamic(() => import("./summary-form"), { ssr: false });
+const SummaryForm = nextDynamic(() => import("./summary-form"));
 
 export const dynamic = "force-dynamic";
 
