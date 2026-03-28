@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
+import { SkipStreamsProvider } from "@/src/skip/skip-streams-provider";
 import AuthTokensLive from "./auth-tokens-live";
 import GroupsLive from "./groups-live";
 import RoutesLive from "./routes-live";
@@ -146,27 +147,29 @@ export default function SlashworkPage() {
           <AdminSection />
         </Suspense>
 
-        <div className="sw-grid">
-          <Suspense fallback={<SectionSkeleton />}>
-            <AuthTokensSection />
-          </Suspense>
+        <SkipStreamsProvider>
+          <div className="sw-grid">
+            <Suspense fallback={<SectionSkeleton />}>
+              <AuthTokensSection />
+            </Suspense>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <GroupsSection />
-          </Suspense>
+            <Suspense fallback={<SectionSkeleton />}>
+              <GroupsSection />
+            </Suspense>
 
-          <Suspense fallback={<SectionSkeleton />}>
-            <RoutesSection />
-          </Suspense>
+            <Suspense fallback={<SectionSkeleton />}>
+              <RoutesSection />
+            </Suspense>
 
-          <Suspense fallback={<WideSectionSkeleton />}>
-            <CalendarSection />
-          </Suspense>
+            <Suspense fallback={<WideSectionSkeleton />}>
+              <CalendarSection />
+            </Suspense>
 
-          <Suspense fallback={<WideSectionSkeleton />}>
-            <DiscoveredGroupsSection />
-          </Suspense>
-        </div>
+            <Suspense fallback={<WideSectionSkeleton />}>
+              <DiscoveredGroupsSection />
+            </Suspense>
+          </div>
+        </SkipStreamsProvider>
       </main>
     </div>
   );

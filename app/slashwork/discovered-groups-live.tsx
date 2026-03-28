@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { parseSkipEntries, applySkipUpdates } from "@/src/skip/parse-stream";
+import { useSkipStream } from "@/src/skip/skip-streams-provider";
 
 interface DbSlashworkGroup {
   slashwork_id: string;
@@ -33,69 +32,19 @@ export default function DiscoveredGroupsLive({
   initialGroups: DiscoveredGroup[];
   configuredGroupIds: string[];
 }) {
-  const [groups, setGroups] = useState(initialGroups);
-  const [connected, setConnected] = useState(false);
-
-  useEffect(() => {
-    let eventSource: EventSource | null = null;
-    let cancelled = false;
-
-    async function connect() {
-      if (cancelled) return;
-
-      try {
-        const res = await fetch("/api/skip/discovered-groups");
-        if (!res.ok || cancelled) return;
-        const { streamUrl } = await res.json();
-
-        if (cancelled) return;
-        eventSource = new EventSource(streamUrl);
-
-        eventSource.addEventListener("init", (e) => {
-          const data = JSON.parse(e.data);
-          if (!Array.isArray(data.values)) return;
-          const dbRows: DbSlashworkGroup[] = parseSkipEntries(data.values);
-          setGroups(dbRows.map(dbToGroup));
-          setConnected(true);
-        });
-
-        eventSource.addEventListener("update", (e) => {
-          const data = JSON.parse(e.data);
-          if (!Array.isArray(data.values)) return;
-          setGroups((prev) => {
-            const dbCurrent = prev.map((g) => ({
-              slashwork_id: g.slashworkId,
-              name: g.name,
-              discovered_at: g.discoveredAt,
-              last_seen_at: g.lastSeenAt,
-            }));
-            const updated = applySkipUpdates(dbCurrent, data.values);
-            return updated.map(dbToGroup);
-          });
-        });
-
-        eventSource.onerror = () => {
-          setConnected(false);
-          eventSource?.close();
-          eventSource = null;
-          if (!cancelled) {
-            setTimeout(connect, 5000);
-          }
-        };
-      } catch {
-        if (!cancelled) {
-          setTimeout(connect, 5000);
-        }
-      }
-    }
-
-    connect();
-
-    return () => {
-      cancelled = true;
-      eventSource?.close();
-    };
-  }, []);
+  const initialMap = new Map(
+    initialGroups.map((g) => [g.slashworkId, {
+      slashwork_id: g.slashworkId,
+      name: g.name,
+      discovered_at: g.discoveredAt,
+      last_seen_at: g.lastSeenAt,
+    } as DbSlashworkGroup]),
+  );
+  const { items, connected } = useSkipStream<DbSlashworkGroup>(
+    "discoveredGroups",
+    initialMap,
+  );
+  const groups = Array.from(items.values()).map(dbToGroup);
 
   const configuredSet = new Set(configuredGroupIds);
 
