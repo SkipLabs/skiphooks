@@ -326,6 +326,36 @@
 .sw-admin-inline-status--ok { color: var(--cfg-green); }
 .sw-admin-inline-status--err { color: #ef4444; }
 
+/* Skeleton loading */
+@keyframes sw-shimmer {
+  0% { opacity: 0.08; }
+  50% { opacity: 0.15; }
+  100% { opacity: 0.08; }
+}
+
+.sw-skeleton {
+  background: var(--cfg-text);
+  border-radius: 4px;
+  animation: sw-shimmer 1.5s ease-in-out infinite;
+}
+
+.sw-skeleton--title {
+  height: 0.75rem;
+  width: 6rem;
+}
+
+.sw-skeleton--table {
+  height: 5rem;
+  margin: 0.875rem;
+  border-radius: 4px;
+}
+
+.sw-skeleton--admin {
+  height: 2.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 4px;
+}
+
 /* Empty state */
 .sw-empty {
   padding: 1.5rem 0.875rem;

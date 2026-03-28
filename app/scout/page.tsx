@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import {
   getRecentCrawlRuns,
   getSavedThreads,
@@ -25,25 +26,268 @@ function truncate(str: string, len: number): string {
   return str.length > len ? str.slice(0, len) + "\u2026" : str;
 }
 
-export default async function ScoutPage() {
-  const warnings = getScoutWarnings();
-  const dbAvailable = hasDatabase();
-
+async function ConfigSection() {
   const pipelineConfig = await loadPipelineConfig();
+  return (
+    <div className="cfg-section">
+      <div className="cfg-section-header">
+        <h2 className="cfg-section-title">Pipeline Config</h2>
+      </div>
+      <ScoutConfigForm initialConfig={pipelineConfig} />
+    </div>
+  );
+}
 
-  const [stats, crawlRuns, threads, queue] = dbAvailable
-    ? await Promise.all([
-        getScoutStats(),
-        getRecentCrawlRuns(10),
-        getSavedThreads(20),
-        getQueue({ status: "pending" }),
-      ])
-    : [
-        { totalRuns: 0, totalThreads: 0, totalComments: 0, pendingComments: 0 },
-        [],
-        [],
-        [],
-      ];
+async function StatsSection() {
+  const dbAvailable = hasDatabase();
+  const stats = dbAvailable
+    ? await getScoutStats()
+    : { totalRuns: 0, totalThreads: 0, totalComments: 0, pendingComments: 0 };
+  return (
+    <div className="scout-stats">
+      <div className="scout-stat">
+        <span className="scout-stat-value">{stats.totalRuns}</span>
+        <span className="scout-stat-label">Crawl Runs</span>
+      </div>
+      <div className="scout-stat">
+        <span className="scout-stat-value">{stats.totalThreads}</span>
+        <span className="scout-stat-label">Threads</span>
+      </div>
+      <div className="scout-stat">
+        <span className="scout-stat-value">{stats.totalComments}</span>
+        <span className="scout-stat-label">Comments</span>
+      </div>
+      <div className="scout-stat">
+        <span className="scout-stat-value scout-stat-value--accent">
+          {stats.pendingComments}
+        </span>
+        <span className="scout-stat-label">Pending</span>
+      </div>
+    </div>
+  );
+}
+
+async function CrawlRunsSection() {
+  const dbAvailable = hasDatabase();
+  const crawlRuns = dbAvailable ? await getRecentCrawlRuns(10) : [];
+  return (
+    <div className="cfg-section cfg-section--wide">
+      <div className="cfg-section-header">
+        <h2 className="cfg-section-title">Recent Crawl Runs</h2>
+        <span className="cfg-count">{crawlRuns.length}</span>
+      </div>
+      <table className="cfg-table" aria-label="Recent crawl runs">
+        <thead>
+          <tr>
+            <th scope="col">Started</th>
+            <th scope="col">Subreddits</th>
+            <th scope="col">Scanned</th>
+            <th scope="col">Saved</th>
+            <th scope="col">Comments</th>
+            <th scope="col">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {crawlRuns.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="cfg-empty">
+                No crawl runs yet
+              </td>
+            </tr>
+          ) : (
+            crawlRuns.map((run) => (
+              <tr key={run.id}>
+                <td className="cfg-mono">{timeAgo(run.startedAt)}</td>
+                <td>
+                  {run.subreddits.map((s) => (
+                    <span key={s} className="scout-sub">
+                      r/{s}
+                    </span>
+                  ))}
+                </td>
+                <td>{run.threadsScanned}</td>
+                <td>{run.threadsSaved}</td>
+                <td>{run.commentsSaved}</td>
+                <td>
+                  {run.errorMessage ? (
+                    <span className="cfg-badge scout-badge--error">
+                      error
+                    </span>
+                  ) : run.completedAt ? (
+                    <span className="cfg-badge scout-badge--done">
+                      done
+                    </span>
+                  ) : (
+                    <span className="cfg-badge scout-badge--running">
+                      running
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+async function SavedThreadsSection() {
+  const dbAvailable = hasDatabase();
+  const threads = dbAvailable ? await getSavedThreads(20) : [];
+  return (
+    <div className="cfg-section cfg-section--wide">
+      <div className="cfg-section-header">
+        <h2 className="cfg-section-title">Saved Threads</h2>
+        <span className="cfg-count">{threads.length}</span>
+      </div>
+      <table className="cfg-table" aria-label="Saved threads">
+        <thead>
+          <tr>
+            <th scope="col">Thread</th>
+            <th scope="col">Subreddit</th>
+            <th scope="col">Score</th>
+            <th scope="col">Topics</th>
+            <th scope="col">Saved</th>
+          </tr>
+        </thead>
+        <tbody>
+          {threads.length === 0 ? (
+            <tr>
+              <td colSpan={5} className="cfg-empty">
+                No saved threads yet
+              </td>
+            </tr>
+          ) : (
+            threads.map((t) => (
+              <tr key={t.id}>
+                <td>
+                  <a
+                    href={t.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="scout-thread-link"
+                  >
+                    {truncate(t.title, 80)}
+                  </a>
+                </td>
+                <td>
+                  <span className="scout-sub">r/{t.subreddit}</span>
+                </td>
+                <td>
+                  <span className="scout-score">
+                    {t.relevanceScore.toFixed(1)}
+                  </span>
+                </td>
+                <td className="scout-topics">
+                  {t.suggestedTopics.slice(0, 3).map((topic) => (
+                    <span key={topic} className="scout-topic">
+                      {topic}
+                    </span>
+                  ))}
+                </td>
+                <td className="cfg-mono">{timeAgo(t.savedAt)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+async function PendingQueueSection() {
+  const dbAvailable = hasDatabase();
+  const queue = dbAvailable ? await getQueue({ status: "pending" }) : [];
+  return (
+    <div className="cfg-section cfg-section--wide">
+      <div className="cfg-section-header">
+        <h2 className="cfg-section-title">Pending Queue</h2>
+        <span className="cfg-count">{queue.length}</span>
+      </div>
+      <table className="cfg-table" aria-label="Pending queue">
+        <thead>
+          <tr>
+            <th scope="col">Comment</th>
+            <th scope="col">Thread</th>
+            <th scope="col">Author</th>
+            <th scope="col">Score</th>
+            <th scope="col">Urgency</th>
+            <th scope="col">Saved</th>
+          </tr>
+        </thead>
+        <tbody>
+          {queue.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="cfg-empty">
+                No pending comments
+              </td>
+            </tr>
+          ) : (
+            queue.map((item) => (
+              <tr key={item.id}>
+                <td>
+                  <a
+                    href={item.commentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="scout-thread-link"
+                  >
+                    {truncate(item.commentBody, 60)}
+                  </a>
+                </td>
+                <td className="scout-thread-title">
+                  {truncate(item.thread.title, 40)}
+                </td>
+                <td className="cfg-mono">u/{item.author}</td>
+                <td>
+                  <span className="scout-score">
+                    {item.relevanceScore.toFixed(1)}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    className={`cfg-badge scout-badge--${item.urgency}`}
+                  >
+                    {item.urgency}
+                  </span>
+                </td>
+                <td className="cfg-mono">{timeAgo(item.savedAt)}</td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SectionSkeleton({ wide }: { wide?: boolean }) {
+  return (
+    <div className={`cfg-section${wide ? " cfg-section--wide" : ""}`}>
+      <div className="cfg-section-header">
+        <div className="sw-skeleton sw-skeleton--title" />
+      </div>
+      <div className="sw-skeleton sw-skeleton--table" />
+    </div>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className="scout-stats">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="scout-stat">
+          <div className="sw-skeleton" style={{ height: "1.5rem", width: "2rem" }} />
+          <div className="sw-skeleton" style={{ height: "0.625rem", width: "4rem", marginTop: "0.25rem" }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function ScoutPage() {
+  const warnings = getScoutWarnings();
 
   return (
     <div className="cfg-page">
@@ -62,7 +306,7 @@ export default async function ScoutPage() {
             </div>
             <p className="scout-warnings-desc">
               The scout pipeline cannot run until the following environment variables are configured.
-              {!dbAvailable && " Dashboard data is unavailable without a database connection."}
+              {!hasDatabase() && " Dashboard data is unavailable without a database connection."}
             </p>
             <ul className="scout-warnings-list">
               {warnings.map((w) => (
@@ -92,216 +336,26 @@ export default async function ScoutPage() {
           </div>
         )}
 
-        {/* Config */}
-        <div className="cfg-section">
-          <div className="cfg-section-header">
-            <h2 className="cfg-section-title">Pipeline Config</h2>
-          </div>
-          <ScoutConfigForm initialConfig={pipelineConfig} />
-        </div>
+        <Suspense fallback={<SectionSkeleton />}>
+          <ConfigSection />
+        </Suspense>
 
-        {/* Stats bar */}
-        <div className="scout-stats">
-          <div className="scout-stat">
-            <span className="scout-stat-value">{stats.totalRuns}</span>
-            <span className="scout-stat-label">Crawl Runs</span>
-          </div>
-          <div className="scout-stat">
-            <span className="scout-stat-value">{stats.totalThreads}</span>
-            <span className="scout-stat-label">Threads</span>
-          </div>
-          <div className="scout-stat">
-            <span className="scout-stat-value">{stats.totalComments}</span>
-            <span className="scout-stat-label">Comments</span>
-          </div>
-          <div className="scout-stat">
-            <span className="scout-stat-value scout-stat-value--accent">
-              {stats.pendingComments}
-            </span>
-            <span className="scout-stat-label">Pending</span>
-          </div>
-        </div>
+        <Suspense fallback={<StatsSkeleton />}>
+          <StatsSection />
+        </Suspense>
 
         <div className="cfg-grid">
-          {/* Recent Crawl Runs */}
-          <div className="cfg-section cfg-section--wide">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Recent Crawl Runs</h2>
-              <span className="cfg-count">{crawlRuns.length}</span>
-            </div>
-            <table className="cfg-table" aria-label="Recent crawl runs">
-              <thead>
-                <tr>
-                  <th scope="col">Started</th>
-                  <th scope="col">Subreddits</th>
-                  <th scope="col">Scanned</th>
-                  <th scope="col">Saved</th>
-                  <th scope="col">Comments</th>
-                  <th scope="col">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {crawlRuns.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="cfg-empty">
-                      No crawl runs yet
-                    </td>
-                  </tr>
-                ) : (
-                  crawlRuns.map((run) => (
-                    <tr key={run.id}>
-                      <td className="cfg-mono">{timeAgo(run.startedAt)}</td>
-                      <td>
-                        {run.subreddits.map((s) => (
-                          <span key={s} className="scout-sub">
-                            r/{s}
-                          </span>
-                        ))}
-                      </td>
-                      <td>{run.threadsScanned}</td>
-                      <td>{run.threadsSaved}</td>
-                      <td>{run.commentsSaved}</td>
-                      <td>
-                        {run.errorMessage ? (
-                          <span className="cfg-badge scout-badge--error">
-                            error
-                          </span>
-                        ) : run.completedAt ? (
-                          <span className="cfg-badge scout-badge--done">
-                            done
-                          </span>
-                        ) : (
-                          <span className="cfg-badge scout-badge--running">
-                            running
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Suspense fallback={<SectionSkeleton wide />}>
+            <CrawlRunsSection />
+          </Suspense>
 
-          {/* Saved Threads */}
-          <div className="cfg-section cfg-section--wide">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Saved Threads</h2>
-              <span className="cfg-count">{threads.length}</span>
-            </div>
-            <table className="cfg-table" aria-label="Saved threads">
-              <thead>
-                <tr>
-                  <th scope="col">Thread</th>
-                  <th scope="col">Subreddit</th>
-                  <th scope="col">Score</th>
-                  <th scope="col">Topics</th>
-                  <th scope="col">Saved</th>
-                </tr>
-              </thead>
-              <tbody>
-                {threads.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="cfg-empty">
-                      No saved threads yet
-                    </td>
-                  </tr>
-                ) : (
-                  threads.map((t) => (
-                    <tr key={t.id}>
-                      <td>
-                        <a
-                          href={t.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="scout-thread-link"
-                        >
-                          {truncate(t.title, 80)}
-                        </a>
-                      </td>
-                      <td>
-                        <span className="scout-sub">r/{t.subreddit}</span>
-                      </td>
-                      <td>
-                        <span className="scout-score">
-                          {t.relevanceScore.toFixed(1)}
-                        </span>
-                      </td>
-                      <td className="scout-topics">
-                        {t.suggestedTopics.slice(0, 3).map((topic) => (
-                          <span key={topic} className="scout-topic">
-                            {topic}
-                          </span>
-                        ))}
-                      </td>
-                      <td className="cfg-mono">{timeAgo(t.savedAt)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Suspense fallback={<SectionSkeleton wide />}>
+            <SavedThreadsSection />
+          </Suspense>
 
-          {/* Pending Queue */}
-          <div className="cfg-section cfg-section--wide">
-            <div className="cfg-section-header">
-              <h2 className="cfg-section-title">Pending Queue</h2>
-              <span className="cfg-count">{queue.length}</span>
-            </div>
-            <table className="cfg-table" aria-label="Pending queue">
-              <thead>
-                <tr>
-                  <th scope="col">Comment</th>
-                  <th scope="col">Thread</th>
-                  <th scope="col">Author</th>
-                  <th scope="col">Score</th>
-                  <th scope="col">Urgency</th>
-                  <th scope="col">Saved</th>
-                </tr>
-              </thead>
-              <tbody>
-                {queue.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="cfg-empty">
-                      No pending comments
-                    </td>
-                  </tr>
-                ) : (
-                  queue.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <a
-                          href={item.commentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="scout-thread-link"
-                        >
-                          {truncate(item.commentBody, 60)}
-                        </a>
-                      </td>
-                      <td className="scout-thread-title">
-                        {truncate(item.thread.title, 40)}
-                      </td>
-                      <td className="cfg-mono">u/{item.author}</td>
-                      <td>
-                        <span className="scout-score">
-                          {item.relevanceScore.toFixed(1)}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          className={`cfg-badge scout-badge--${item.urgency}`}
-                        >
-                          {item.urgency}
-                        </span>
-                      </td>
-                      <td className="cfg-mono">{timeAgo(item.savedAt)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+          <Suspense fallback={<SectionSkeleton wide />}>
+            <PendingQueueSection />
+          </Suspense>
         </div>
       </main>
     </div>
