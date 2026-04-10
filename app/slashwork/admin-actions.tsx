@@ -42,10 +42,10 @@ export default function AdminActions({ authTokenNames, groupNames }: AdminAction
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setTokenStatus({ type: "ok", msg: "Token added — reloading..." });
+      setTokenStatus({ type: "ok", msg: "Token added" });
       setTokenName("");
       setTokenValue("");
-      setTimeout(() => location.reload(), 1000);
+      setShowTokenForm(false);
     } catch (err) {
       setTokenStatus({ type: "err", msg: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -72,9 +72,9 @@ export default function AdminActions({ authTokenNames, groupNames }: AdminAction
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setRouteStatus({ type: "ok", msg: "Route added — reloading..." });
+      setRouteStatus({ type: "ok", msg: "Route added" });
       setRouteName("");
-      setTimeout(() => location.reload(), 1000);
+      setShowRouteForm(false);
     } catch (err) {
       setRouteStatus({ type: "err", msg: err instanceof Error ? err.message : String(err) });
     } finally {
@@ -271,7 +271,7 @@ export function DeleteButton({ endpoint, name, label }: { endpoint: string; name
         alert(data.error || "Delete failed");
         return;
       }
-      location.reload();
+      // Live stream will pick up the deletion automatically
     } catch (err) {
       alert(err instanceof Error ? err.message : String(err));
     } finally {

@@ -15,7 +15,7 @@ function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
 }
 
-const SKIP_MONITORED_TABLES = ["slashwork_groups"];
+const SKIP_MONITORED_TABLES = ["slashwork_groups", "auth_tokens", "groups", "routes"];
 
 let skipStarted = false;
 let skipServer: SkipServer | null = null;
