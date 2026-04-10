@@ -2,6 +2,7 @@ import { loadAppConfig, type EventType, type AppConfig } from "@/src/config";
 import { resolveRouteFromDb } from "@/src/db";
 import { verifySignature } from "@/src/webhook";
 import { postToSlashwork, type SlashworkConnection } from "@/src/slashwork";
+import { processGitHubMentions } from "@/src/mentions";
 import type { EventHandler } from "@/src/handlers/types";
 import { pullRequestHandler } from "@/src/handlers/pull-request";
 import { issuesHandler } from "@/src/handlers/issues";
@@ -101,7 +102,8 @@ export async function POST(
 
   try {
     const { markdown } = handler.format(payload);
-    await postToSlashwork(connection, targetId, markdown);
+    const enriched = await processGitHubMentions(markdown, payload, eventType);
+    await postToSlashwork(connection, targetId, enriched);
     log("info", `Posted ${eventType} event: ${payload.action ?? "n/a"}`);
   } catch (err) {
     log("error", `Failed to post to Slashwork: ${err}`);

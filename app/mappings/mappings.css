@@ -1,0 +1,241 @@
+.map-page {
+  background: var(--cfg-bg);
+  min-height: 100vh;
+  color: var(--cfg-text);
+  font-family: var(--cfg-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+.map-container {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.map-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--cfg-border);
+}
+
+.map-title {
+  font-family: var(--cfg-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--cfg-text);
+  letter-spacing: 0.04em;
+}
+
+.map-title span {
+  color: var(--cfg-text-dim);
+}
+
+.map-subtitle {
+  font-size: 0.75rem;
+  color: var(--cfg-text-dim);
+  font-family: var(--cfg-mono);
+}
+
+/* Add form */
+.map-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.map-input {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-text);
+  background: var(--cfg-surface);
+  border: 1px solid var(--cfg-border);
+  border-radius: 4px;
+  padding: 0.375rem 0.5rem;
+  outline: none;
+  transition: border-color 0.15s ease;
+  min-width: 10rem;
+}
+
+.map-input:focus {
+  border-color: var(--cfg-accent);
+}
+
+.map-btn {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+  white-space: nowrap;
+  color: var(--cfg-bg);
+  background: var(--cfg-accent);
+}
+
+.map-btn:hover { opacity: 0.9; }
+.map-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Section card */
+.map-section {
+  background: var(--cfg-surface);
+  border: 1px solid var(--cfg-border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.map-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid var(--cfg-border);
+}
+
+.map-section-title {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--cfg-text-muted);
+}
+
+.map-count {
+  font-family: var(--cfg-mono);
+  font-size: 0.625rem;
+  color: var(--cfg-text-dim);
+  background: var(--cfg-bg);
+  padding: 0.125rem 0.4rem;
+  border-radius: 3px;
+}
+
+/* Table */
+.map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.map-table thead th {
+  text-align: left;
+  padding: 0.4375rem 0.875rem;
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: var(--cfg-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--cfg-bg);
+  border-bottom: 1px solid var(--cfg-border-subtle);
+}
+
+.map-table tbody tr {
+  transition: background 0.1s ease;
+}
+
+.map-table tbody tr:hover {
+  background: var(--cfg-surface-hover);
+}
+
+.map-table tbody td {
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid var(--cfg-border-subtle);
+  color: var(--cfg-text);
+  white-space: nowrap;
+}
+
+.map-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.map-mono {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+}
+
+.map-arrow {
+  color: var(--cfg-text-dim);
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+}
+
+/* Delete button */
+.map-delete-btn {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-text-dim);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 0.125rem 0.375rem;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.map-delete-btn:hover {
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.map-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Status messages */
+.map-status {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  padding: 0.25rem 0;
+}
+
+.map-status--ok { color: var(--cfg-green); }
+.map-status--err { color: #ef4444; }
+
+/* Inline edit input */
+.map-edit-input {
+  font-family: var(--cfg-mono);
+  font-size: 0.75rem;
+  color: var(--cfg-text);
+  background: var(--cfg-bg);
+  border: 1px solid var(--cfg-accent);
+  border-radius: 3px;
+  padding: 0.125rem 0.375rem;
+  outline: none;
+  width: 10rem;
+}
+
+/* Empty state */
+.map-empty {
+  padding: 1.5rem 0.875rem;
+  text-align: center;
+  color: var(--cfg-text-dim);
+  font-size: 0.75rem;
+  font-family: var(--cfg-mono);
+}
+
+/* Skeleton loading */
+@keyframes map-shimmer {
+  0% { opacity: 0.08; }
+  50% { opacity: 0.15; }
+  100% { opacity: 0.08; }
+}
+
+.map-skeleton {
+  background: var(--cfg-text);
+  border-radius: 4px;
+  animation: map-shimmer 1.5s ease-in-out infinite;
+}
+
+.map-skeleton--table {
+  height: 5rem;
+  margin: 0.875rem;
+  border-radius: 4px;
+}
