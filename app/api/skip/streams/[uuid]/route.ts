@@ -37,6 +37,14 @@ export async function GET(
     const skipBody = response.body;
     const broker = getSkipBroker();
 
+    let uuidDeleted = false;
+    const deleteUUID = () => {
+      if (!uuidDeleted) {
+        uuidDeleted = true;
+        broker.deleteUUID(uuid).catch(() => {});
+      }
+    };
+
     const stream = new ReadableStream({
       async start(streamController) {
         const encoder = new TextEncoder();
@@ -71,13 +79,12 @@ export async function GET(
           } catch {
             // Already closed
           }
-          // Clean up Skip resource instance
-          broker.deleteUUID(uuid).catch(() => {});
+          deleteUUID();
         }
       },
       cancel() {
         skipBody.cancel().catch(() => {});
-        broker.deleteUUID(uuid).catch(() => {});
+        deleteUUID();
       },
     });
 
