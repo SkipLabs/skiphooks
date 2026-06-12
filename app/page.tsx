@@ -31,13 +31,6 @@ export default function Home() {
           </svg>
           Weekly Digest
         </Link>
-        <Link href="/scout" className="home-link">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="7" cy="7" r="5.5" />
-            <path d="M11.5 11.5 15 15" />
-          </svg>
-          Reddit Scout
-        </Link>
       </nav>
     </main>
   );

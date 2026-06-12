@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { getGroups, getAuthTokens, getDiscoveredGroups } from "@/src/db";
-import { hasDatabase } from "@/src/lib/config";
 import "./summary.css";
 
 const SummaryForm = nextDynamic(() => import("./summary-form"));
@@ -9,7 +8,7 @@ const SummaryForm = nextDynamic(() => import("./summary-form"));
 export const dynamic = "force-dynamic";
 
 async function SummaryFormSection() {
-  const dbAvailable = hasDatabase();
+  const dbAvailable = !!process.env.POSTGRESQL_ADDON_URI;
   const [groups, authTokens, discoveredGroups] = dbAvailable
     ? await Promise.all([getGroups(), getAuthTokens(), getDiscoveredGroups()])
     : [[], [], []];

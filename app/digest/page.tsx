@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { getAuthTokens, getDiscoveredGroups, getDigestConfig } from "@/src/db";
-import { hasDatabase } from "@/src/lib/config";
 import "./digest.css";
 
 const DigestForm = nextDynamic(() => import("./digest-form"));
@@ -9,7 +8,7 @@ const DigestForm = nextDynamic(() => import("./digest-form"));
 export const dynamic = "force-dynamic";
 
 async function DigestFormSection() {
-  const dbAvailable = hasDatabase();
+  const dbAvailable = !!process.env.POSTGRESQL_ADDON_URI;
   const [authTokens, discoveredGroups, digestConfig] = dbAvailable
     ? await Promise.all([getAuthTokens(), getDiscoveredGroups(), getDigestConfig()])
     : [[], [], null];

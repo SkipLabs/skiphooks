@@ -41,7 +41,6 @@ Pages and API routes live in `app/`. Clerk auth protects all pages except webhoo
 - `/slashwork` — Database state viewer (auth tokens, groups, routes, discovered groups, digest status)
 - `/summary` — Per-group weekly summary with AI (pick group, week, prompt → summarize → publish)
 - `/digest` — Cross-group weekly digest (config, manual trigger, auto-post toggle)
-- `/scout` — Reddit Scout dashboard
 
 **API routes:**
 - `POST /github/[route]` — GitHub webhook receiver (signature verify → handler → Slashwork post)
@@ -120,7 +119,7 @@ The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip 
 
 ### Config (`src/config.ts`)
 
-`loadAppConfig()` loads `GITHUB_WEBHOOK_SECRET` and `SLASHWORK_GRAPHQL_URL`. Calendar and Scout configs are separate (`src/lib/config.ts` for Scout).
+`loadAppConfig()` loads `GITHUB_WEBHOOK_SECRET` and `SLASHWORK_GRAPHQL_URL`. Calendar config is separate.
 
 ## Tests
 
