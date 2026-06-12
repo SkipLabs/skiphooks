@@ -13,14 +13,11 @@ export function computeDigestWindow(now: Date = new Date()): { start: string; en
     now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + daysToThursday, 14, 0, 0,
   ));
 
-  // If we're past Thursday 14:00, thisThursday is next week — use it as end
-  // Otherwise thisThursday is upcoming — use it as end
-  let end: Date;
-  if (thisThursday.getTime() <= now.getTime()) {
-    end = thisThursday;
-  } else {
-    end = thisThursday;
-  }
+  // If we're at or past this Thursday 14:00, it's the end of the current window.
+  // Otherwise the current window ended at the previous Thursday 14:00.
+  const end: Date = thisThursday.getTime() <= now.getTime()
+    ? thisThursday
+    : new Date(thisThursday.getTime() - 7 * 24 * 60 * 60 * 1000);
 
   const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
 
