@@ -66,7 +66,7 @@ Key functions: `resolveRouteFromDb()`, `getGroups()`, `getAuthToken()`, `getDisc
 
 ### Handlers (`src/handlers/`)
 
-Each implements `EventHandler` interface: `isRelevantAction(action?)` + `format(payload) → { markdown }`. Handlers: `pull-request.ts`, `issues.ts`, `issue-comment.ts`, `push.ts`, `release.ts`.
+Each implements `EventHandler` interface: `isRelevantAction(action?)` + `format(payload) → { markdown }`. Handlers: `pull-request.ts`, `pull-request-review.ts`, `issues.ts`, `issue-comment.ts`, `push.ts`, `release.ts`, `check-suite.ts`, `deployment-status.ts`, `workflow-run.ts`.
 
 ### Slashwork Client (`src/slashwork.ts`)
 
@@ -91,13 +91,40 @@ Three background tasks started on app boot:
 
 Google Calendar polling that posts event reminders. Config from DB (`calendar_users` table). Requires `GOOGLE_SERVICE_ACCOUNT_KEY` env var.
 
+### Skip Reactive Streams (`src/skip/`)
+
+The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip runs as a sidecar process on boot (started in `instrumentation.ts`) that watches PostgreSQL tables and streams changes to the browser via Server-Sent Events.
+
+**Architecture:**
+- `src/skip/service.ts` — defines the `SkipService` with four reactive collections (`authTokens`, `groups`, `routes`, `discoveredGroups`) backed by `@skip-adapter/postgres`
+- `src/skip/postgres-adapter.ts` — `PostgresExternalService` connects to PostgreSQL and monitors the four tables via triggers
+- `src/skip/broker.ts` — `SkipServiceBroker` singleton used by API routes to get stream URLs from the Skip control port
+- `src/skip/parse-stream.ts` — applies incremental Skip SSE updates to a local `Map`
+- `src/skip/skip-streams-provider.tsx` — React context that manages shared `EventSource` connections (one per stream name, shared across subscribers)
+- `app/api/skip/*` — proxy routes that call the Skip broker to get stream URLs, then forward SSE from the Skip streaming port to the browser. `/api/skip/batch` returns all four URLs at once.
+
+**Startup:** `instrumentation.ts` calls `cleanupOrphanSkipTriggers()` (drops leftover pg triggers from a prior run), then `runService(skipService, { streaming_port, control_port })`, then starts a watchdog that exits the process after 5 consecutive health-check failures (triggering a platform restart).
+
+**Ports:** `SKIP_STREAMING_PORT` (default 8079) for SSE, `SKIP_CONTROL_PORT` (default 8078) for broker/healthz.
+
+### Admin API (`app/api/admin/`)
+
+- `GET/POST /api/admin/routes` — list / create webhook routes
+- `GET/POST /api/admin/tokens` — list / create Slashwork auth tokens
+- `POST /api/admin/test-connection` — validate a Slashwork connection
+
+### Utilities
+
+- `src/retry.ts` — `fetchWithRetry(url, init, maxRetries)` with exponential backoff on 429/502/503/504
+- `src/api-error.ts` — `apiError(message, code, status)` returns a typed `NextResponse` JSON error
+
 ### Config (`src/config.ts`)
 
-`loadAppConfig()` loads `GITHUB_WEBHOOK_SECRET` and `SLASHWORK_GRAPHQL_URL`. Calendar and Scout configs are separate.
+`loadAppConfig()` loads `GITHUB_WEBHOOK_SECRET` and `SLASHWORK_GRAPHQL_URL`. Calendar and Scout configs are separate (`src/lib/config.ts` for Scout).
 
 ## Tests
 
-Test files live next to source. Pattern: `import { test, expect, describe } from "bun:test"`.
+Unit test files live next to source. E2e tests live in `tests/e2e/`. Pattern: `import { test, expect, describe } from "bun:test"`.
 
 ```sh
 bun test                              # All tests
@@ -115,6 +142,8 @@ See `.env.example`. Key vars:
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk auth
 - `GOOGLE_SERVICE_ACCOUNT_KEY` — calendar feature (optional)
 - `PORT` — server port (default 3000)
+- `SKIP_STREAMING_PORT` — Skip SSE port (default 8079)
+- `SKIP_CONTROL_PORT` — Skip control/healthz port (default 8078)
 
 Auth tokens for Slashwork groups are stored in the DB (`auth_tokens` table), not env vars.
 
