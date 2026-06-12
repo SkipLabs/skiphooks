@@ -10,6 +10,7 @@
     "test": "bash scripts/test.sh",
     "typecheck": "tsc --noEmit",
     "lint": "tsc --noEmit",
+    "install-hooks": "cp scripts/pre-commit.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "db:migrate": "bun scripts/migrate.ts",
     "db:seed": "bun scripts/setup-db.ts"
   },
