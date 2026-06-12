@@ -11,6 +11,9 @@ function getPool(): pg.Pool {
       throw new Error("POSTGRESQL_ADDON_URI environment variable is required");
     }
     pool = new pg.Pool({ connectionString, max: 5 });
+    // Prevent uncaught exception crash when an idle client encounters an error
+    // (e.g. DB server restart). pg emits 'error' on the pool in that case.
+    pool.on("error", (err) => console.error("[pg] Pool idle client error:", err));
   }
   return pool;
 }
