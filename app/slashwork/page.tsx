@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
 import { SkipStreamsProvider } from "@/src/skip/skip-streams-provider";
@@ -12,8 +11,20 @@ const AdminActions = nextDynamic(() => import("./admin-actions"));
 
 export const dynamic = "force-dynamic";
 
-async function AdminSection() {
-  const [authTokens, groups] = await Promise.all([getAuthTokens(), getGroups()]);
+type PageData = Awaited<ReturnType<typeof loadPageData>>;
+
+async function loadPageData() {
+  const [authTokens, groups, routes, calendarUsers, discoveredGroups] = await Promise.all([
+    getAuthTokens(),
+    getGroups(),
+    getRoutes(),
+    getCalendarUsers(),
+    getDiscoveredGroups(),
+  ]);
+  return { authTokens, groups, routes, calendarUsers, discoveredGroups };
+}
+
+function AdminSection({ authTokens, groups }: Pick<PageData, "authTokens" | "groups">) {
   return (
     <AdminActions
       authTokenNames={authTokens.map((t) => t.name)}
@@ -22,8 +33,7 @@ async function AdminSection() {
   );
 }
 
-async function AuthTokensSection() {
-  const authTokens = await getAuthTokens();
+function AuthTokensSection({ authTokens }: Pick<PageData, "authTokens">) {
   return (
     <AuthTokensLive
       initialTokens={authTokens.map((t) => ({
@@ -34,8 +44,7 @@ async function AuthTokensSection() {
   );
 }
 
-async function GroupsSection() {
-  const groups = await getGroups();
+function GroupsSection({ groups }: Pick<PageData, "groups">) {
   return (
     <GroupsLive
       initialGroups={groups.map((g) => ({
@@ -47,8 +56,7 @@ async function GroupsSection() {
   );
 }
 
-async function RoutesSection() {
-  const routes = await getRoutes();
+function RoutesSection({ routes }: Pick<PageData, "routes">) {
   return (
     <RoutesLive
       initialRoutes={routes.map((r) => ({
@@ -61,8 +69,7 @@ async function RoutesSection() {
   );
 }
 
-async function CalendarSection() {
-  const calendarUsers = await getCalendarUsers();
+function CalendarSection({ calendarUsers }: Pick<PageData, "calendarUsers">) {
   if (calendarUsers.length === 0) return null;
   return (
     <div className="sw-section sw-section--wide">
@@ -92,11 +99,7 @@ async function CalendarSection() {
   );
 }
 
-async function DiscoveredGroupsSection() {
-  const [discoveredGroups, groups] = await Promise.all([
-    getDiscoveredGroups(),
-    getGroups(),
-  ]);
+function DiscoveredGroupsSection({ discoveredGroups, groups }: Pick<PageData, "discoveredGroups" | "groups">) {
   return (
     <DiscoveredGroupsLive
       initialGroups={discoveredGroups.map((g) => ({
@@ -110,29 +113,10 @@ async function DiscoveredGroupsSection() {
   );
 }
 
-function SectionSkeleton() {
-  return (
-    <div className="sw-section">
-      <div className="sw-section-header">
-        <div className="sw-skeleton sw-skeleton--title" />
-      </div>
-      <div className="sw-skeleton sw-skeleton--table" />
-    </div>
-  );
-}
 
-function WideSectionSkeleton() {
-  return (
-    <div className="sw-section sw-section--wide">
-      <div className="sw-section-header">
-        <div className="sw-skeleton sw-skeleton--title" />
-      </div>
-      <div className="sw-skeleton sw-skeleton--table" />
-    </div>
-  );
-}
+export default async function SlashworkPage() {
+  const data = await loadPageData();
 
-export default function SlashworkPage() {
   return (
     <div className="sw-page">
       <main className="sw-container">
@@ -143,31 +127,15 @@ export default function SlashworkPage() {
           <span className="sw-subtitle">database state</span>
         </div>
 
-        <Suspense fallback={<div className="sw-skeleton sw-skeleton--admin" />}>
-          <AdminSection />
-        </Suspense>
+        <AdminSection authTokens={data.authTokens} groups={data.groups} />
 
         <SkipStreamsProvider>
           <div className="sw-grid">
-            <Suspense fallback={<SectionSkeleton />}>
-              <AuthTokensSection />
-            </Suspense>
-
-            <Suspense fallback={<SectionSkeleton />}>
-              <GroupsSection />
-            </Suspense>
-
-            <Suspense fallback={<SectionSkeleton />}>
-              <RoutesSection />
-            </Suspense>
-
-            <Suspense fallback={<WideSectionSkeleton />}>
-              <CalendarSection />
-            </Suspense>
-
-            <Suspense fallback={<WideSectionSkeleton />}>
-              <DiscoveredGroupsSection />
-            </Suspense>
+            <AuthTokensSection authTokens={data.authTokens} />
+            <GroupsSection groups={data.groups} />
+            <RoutesSection routes={data.routes} />
+            <CalendarSection calendarUsers={data.calendarUsers} />
+            <DiscoveredGroupsSection discoveredGroups={data.discoveredGroups} groups={data.groups} />
           </div>
         </SkipStreamsProvider>
       </main>
