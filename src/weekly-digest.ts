@@ -45,14 +45,13 @@ export async function generateDigest(
 
   log("info", `Digest: fetching posts from ${activeGroups.length} groups`);
 
-  // Per-group summaries
-  const groupSummaries: Array<{ name: string; summary: string; postCount: number }> = [];
+  // Per-group summaries — fetch + summarize all groups in parallel
   const anthropic = new Anthropic({ apiKey });
 
-  for (const group of activeGroups) {
-    try {
+  const results = await Promise.allSettled(
+    activeGroups.map(async (group) => {
       const posts = await fetchGroupPosts(graphqlUrl, authToken, group.slashworkId, startDate, endDate);
-      if (posts.length === 0) continue;
+      if (posts.length === 0) return null;
 
       const formatted = formatPosts(posts);
       const aiResponse = await anthropic.messages.create({
@@ -68,14 +67,20 @@ export async function generateDigest(
 
       const block = aiResponse.content[0];
       const summary = block && block.type === "text" ? block.text : "";
-      if (summary) {
-        groupSummaries.push({ name: group.name, summary, postCount: posts.length });
-        log("info", `Digest: ${group.name} — ${posts.length} posts summarized`);
-      }
-    } catch (err) {
-      log("error", `Digest: failed to process group "${group.name}": ${err}`);
+      if (!summary) return null;
+
+      log("info", `Digest: ${group.name} — ${posts.length} posts summarized`);
+      return { name: group.name, summary, postCount: posts.length };
+    }),
+  );
+
+  const groupSummaries = results.flatMap((r, i) => {
+    if (r.status === "rejected") {
+      log("error", `Digest: failed to process group "${activeGroups[i]!.name}": ${r.reason}`);
+      return [];
     }
-  }
+    return r.value ? [r.value] : [];
+  });
 
   if (groupSummaries.length === 0) {
     return { markdown: "No activity found across any groups for this period.", groupCount: 0, totalPosts: 0 };
