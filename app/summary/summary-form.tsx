@@ -11,9 +11,14 @@ interface RepoOption {
   slug: string;
 }
 
+interface ConfiguredGroup {
+  slashworkId: string;
+  authToken: string;
+}
+
 interface SummaryFormProps {
   groups: GroupOption[];
-  configuredGroups: string[];
+  configuredGroups: ConfiguredGroup[];
   authTokenNames: string[];
   repos: RepoOption[];
 }
@@ -93,10 +98,17 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames, 
   }, [loading]);
 
   const [publishGroupId, setPublishGroupId] = useState(groups[0]?.slashworkId ?? "");
-  const [publishAs, setPublishAs] = useState(authTokenNames[0] ?? "");
+  const [publishAs, setPublishAs] = useState(
+    configuredGroups.find((g) => g.slashworkId === groups[0]?.slashworkId)?.authToken ?? authTokenNames[0] ?? ""
+  );
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
   const [publishError, setPublishError] = useState("");
+
+  useEffect(() => {
+    const match = configuredGroups.find((g) => g.slashworkId === publishGroupId);
+    if (match) setPublishAs(match.authToken);
+  }, [publishGroupId]);
 
   const nothingSelected = groupId === NO_SELECTION && repo === NO_SELECTION;
 
@@ -139,6 +151,7 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames, 
       setSummary(data.summary as string);
       setPostCount(data.postCount as number);
       setWeekLabel(data.weekLabel as string);
+      if (groupId !== NO_SELECTION) setPublishGroupId(groupId);
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : String(err));

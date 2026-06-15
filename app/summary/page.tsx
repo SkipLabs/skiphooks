@@ -35,7 +35,7 @@ async function SummaryFormSection() {
 
       <SummaryForm
         groups={allGroups}
-        configuredGroups={groups.map((g) => g.name)}
+        configuredGroups={groups.map((g) => ({ slashworkId: g.slashworkId, authToken: g.authToken }))}
         authTokenNames={authTokens.map((t) => t.name)}
         repos={repos}
       />

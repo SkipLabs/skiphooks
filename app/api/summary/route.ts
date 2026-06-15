@@ -82,25 +82,33 @@ export async function POST(request: Request) {
       return apiError("SLASHWORK_GRAPHQL_URL not configured", "MISSING_CONFIG", 500);
     }
 
+    const configuredGroups = await getGroups();
     let slashworkId: string;
+    let tokenName: string | undefined;
+
     if (body.groupId) {
       slashworkId = body.groupId;
       groupLabel = body.groupId;
+      tokenName = configuredGroups.find((g) => g.slashworkId === body.groupId)?.authToken;
     } else {
-      const groups = await getGroups();
-      const dbGroup = groups.find((g) => g.name === body.group);
+      const dbGroup = configuredGroups.find((g) => g.name === body.group);
       if (!dbGroup) {
         return apiError(`Group '${body.group}' not found`, "GROUP_NOT_FOUND", 404);
       }
       slashworkId = dbGroup.slashworkId;
       groupLabel = body.group!;
+      tokenName = dbGroup.authToken;
     }
 
-    const authTokens = await getAuthTokens();
-    if (authTokens.length === 0) {
+    // Fall back to first available token for discovered-only groups not in the groups table
+    if (!tokenName) {
+      const allTokens = await getAuthTokens();
+      tokenName = allTokens[0]?.name;
+    }
+    if (!tokenName) {
       return apiError("No auth tokens configured", "NO_AUTH_TOKENS", 500);
     }
-    const authToken = await getAuthToken(authTokens[0]!.name);
+    const authToken = await getAuthToken(tokenName);
     if (!authToken) {
       return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
     }
