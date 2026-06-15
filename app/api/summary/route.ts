@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { getGroups, getAuthToken, getAuthTokens } from "@/src/db";
 import { fetchGroupPosts, formatPosts } from "@/src/summary-utils";
+import { fetchRepoActivity, formatRepoActivity } from "@/src/github-utils";
 import { apiError } from "@/src/api-error";
 
 function computeWeekRange(weekArg: string): { start: string; end: string; label: string } {
@@ -50,76 +51,109 @@ export async function POST(request: Request) {
     return apiError("Unauthorized", "UNAUTHORIZED", 401);
   }
 
-  let body: { groupId?: string; group?: string; week?: string; prompt?: string };
+  let body: { groupId?: string; group?: string; week?: string; prompt?: string; repo?: string };
   try {
     body = await request.json();
   } catch {
     return apiError("Invalid JSON", "INVALID_JSON", 400);
   }
 
-  const { week } = body;
+  const { week, repo } = body;
   if (!week || !/^(current|previous|week\d{2})$/.test(week)) {
     return apiError("week must be 'current', 'previous', or 'weekXX'", "INVALID_WEEK", 400);
   }
 
-  let slashworkId: string;
-  let groupLabel: string;
-
-  if (body.groupId) {
-    slashworkId = body.groupId;
-    groupLabel = body.groupId;
-  } else if (body.group) {
-    const groups = await getGroups();
-    const dbGroup = groups.find((g) => g.name === body.group);
-    if (!dbGroup) {
-      return apiError(`Group '${body.group}' not found`, "GROUP_NOT_FOUND", 404);
-    }
-    slashworkId = dbGroup.slashworkId;
-    groupLabel = body.group;
-  } else {
-    return apiError("groupId or group is required", "MISSING_GROUP", 400);
-  }
-
-  const authTokens = await getAuthTokens();
-  if (authTokens.length === 0) {
-    return apiError("No auth tokens configured", "NO_AUTH_TOKENS", 500);
-  }
-  const authToken = await getAuthToken(authTokens[0]!.name);
-  if (!authToken) {
-    return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
+  const hasGroup = !!(body.groupId || body.group);
+  const hasRepo = !!repo;
+  if (!hasGroup && !hasRepo) {
+    return apiError("groupId, group, or repo is required", "MISSING_SOURCE", 400);
   }
 
   const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
-  if (!graphqlUrl) {
-    return apiError("SLASHWORK_GRAPHQL_URL not configured", "MISSING_CONFIG", 500);
-  }
-
   const { start, end, label } = computeWeekRange(week);
 
-  try {
+  const sections: string[] = [];
+  let postCount = 0;
+  let groupLabel = "";
+
+  // Fetch Slashwork posts if a group was specified
+  if (hasGroup) {
+    if (!graphqlUrl) {
+      return apiError("SLASHWORK_GRAPHQL_URL not configured", "MISSING_CONFIG", 500);
+    }
+
+    let slashworkId: string;
+    if (body.groupId) {
+      slashworkId = body.groupId;
+      groupLabel = body.groupId;
+    } else {
+      const groups = await getGroups();
+      const dbGroup = groups.find((g) => g.name === body.group);
+      if (!dbGroup) {
+        return apiError(`Group '${body.group}' not found`, "GROUP_NOT_FOUND", 404);
+      }
+      slashworkId = dbGroup.slashworkId;
+      groupLabel = body.group!;
+    }
+
+    const authTokens = await getAuthTokens();
+    if (authTokens.length === 0) {
+      return apiError("No auth tokens configured", "NO_AUTH_TOKENS", 500);
+    }
+    const authToken = await getAuthToken(authTokens[0]!.name);
+    if (!authToken) {
+      return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
+    }
+
     const weekPosts = await fetchGroupPosts(graphqlUrl, authToken, slashworkId, start, end);
-
-    if (weekPosts.length === 0) {
-      return NextResponse.json({
-        summary: `No posts found in '${groupLabel}' for ${label}.`,
-        postCount: 0,
-        weekLabel: label,
-      });
+    postCount = weekPosts.length;
+    if (weekPosts.length > 0) {
+      sections.push(`=== Slashwork: ${groupLabel} ===\n\n${formatPosts(weekPosts)}`);
     }
+  }
 
-    const formatted = formatPosts(weekPosts);
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      return apiError("ANTHROPIC_API_KEY not configured", "MISSING_CONFIG", 500);
+  // Fetch GitHub activity if a repo was specified
+  if (hasRepo) {
+    const parts = repo!.split("/");
+    if (parts.length !== 2 || !parts[0] || !parts[1]) {
+      return apiError("repo must be in 'owner/repo' format", "INVALID_REPO", 400);
     }
+    const [owner, repoName] = parts as [string, string];
+    try {
+      const activity = await fetchRepoActivity(owner, repoName, start, end, process.env.GITHUB_TOKEN);
+      sections.push(formatRepoActivity(owner, repoName, activity));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return apiError(`GitHub fetch failed: ${message}`, "GITHUB_FETCH_FAILED", 502);
+    }
+  }
+
+  if (sections.length === 0 || sections.every((s) => s.includes("No activity"))) {
+    const source = [groupLabel, repo].filter(Boolean).join(" + ");
+    return NextResponse.json({
+      summary: `No activity found in '${source}' for ${label}.`,
+      postCount: 0,
+      weekLabel: label,
+    });
+  }
+
+  const formatted = sections.join("\n\n");
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return apiError("ANTHROPIC_API_KEY not configured", "MISSING_CONFIG", 500);
+  }
+
+  try {
     const anthropic = new Anthropic({ apiKey });
+    const source = [groupLabel, repo].filter(Boolean).join(" + ");
     const aiResponse = await anthropic.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 2048,
       messages: [
         {
           role: "user",
-          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nGroup: ${groupLabel} | ${label}\n\n${formatted}`,
+          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nSource: ${source} | ${label}\n\n${formatted}`,
         },
       ],
     });
@@ -127,11 +161,7 @@ export async function POST(request: Request) {
     const summaryBlock = aiResponse.content[0] ?? { type: "text" as const, text: "" };
     const summary = summaryBlock.type === "text" ? summaryBlock.text : "";
 
-    return NextResponse.json({
-      summary,
-      postCount: weekPosts.length,
-      weekLabel: label,
-    });
+    return NextResponse.json({ summary, postCount, weekLabel: label });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return apiError(`Summarization failed: ${message}`, "SUMMARIZATION_FAILED", 502);

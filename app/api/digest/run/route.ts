@@ -51,6 +51,7 @@ export async function POST(request: Request) {
       markdown: result.markdown,
       groupCount: result.groupCount,
       totalPosts: result.totalPosts,
+      repoCount: result.repoCount,
       window: { start: window.start, end: window.end, label: window.label },
     });
   } catch (err) {

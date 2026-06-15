@@ -187,6 +187,12 @@
   color: var(--cfg-text);
 }
 
+.sum-hint {
+  font-size: 0.8rem;
+  color: var(--cfg-text-muted);
+  align-self: center;
+}
+
 /* Loading */
 .sum-loading {
   margin-top: 1.25rem;

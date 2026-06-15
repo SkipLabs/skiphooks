@@ -7,10 +7,15 @@ interface GroupOption {
   slashworkId: string;
 }
 
+interface RepoOption {
+  slug: string;
+}
+
 interface SummaryFormProps {
   groups: GroupOption[];
   configuredGroups: string[];
   authTokenNames: string[];
+  repos: RepoOption[];
 }
 
 function getISOWeek(date: Date): number {
@@ -59,9 +64,12 @@ const PROMPT_TEMPLATES = [
   },
 ];
 
-export default function SummaryForm({ groups, configuredGroups, authTokenNames }: SummaryFormProps) {
+const NO_SELECTION = "";
+
+export default function SummaryForm({ groups, configuredGroups, authTokenNames, repos }: SummaryFormProps) {
   const { currentWeek, options: WEEK_OPTIONS } = useMemo(buildWeekOptions, []);
-  const [groupId, setGroupId] = useState(groups[0]?.slashworkId ?? "");
+  const [groupId, setGroupId] = useState(groups[0]?.slashworkId ?? NO_SELECTION);
+  const [repo, setRepo] = useState(NO_SELECTION);
   const [week, setWeek] = useState(`week${String(currentWeek).padStart(2, "0")}`);
   const [prompt, setPrompt] = useState(PROMPT_TEMPLATES[0]!.prompt);
   const [loading, setLoading] = useState(false);
@@ -70,7 +78,6 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
   const [weekLabel, setWeekLabel] = useState("");
   const [error, setError] = useState("");
 
-  // Elapsed time for loading
   const [elapsed, setElapsed] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -85,12 +92,13 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [loading]);
 
-  // Publish state
   const [publishGroupId, setPublishGroupId] = useState(groups[0]?.slashworkId ?? "");
   const [publishAs, setPublishAs] = useState(authTokenNames[0] ?? "");
   const [publishing, setPublishing] = useState(false);
   const [publishStatus, setPublishStatus] = useState<"idle" | "success" | "error">("idle");
   const [publishError, setPublishError] = useState("");
+
+  const nothingSelected = groupId === NO_SELECTION && repo === NO_SELECTION;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -105,10 +113,14 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
     setWeekLabel("");
 
     try {
+      const body: Record<string, string> = { week, prompt: prompt.trim() || undefined! };
+      if (groupId !== NO_SELECTION) body.groupId = groupId;
+      if (repo !== NO_SELECTION) body.repo = repo;
+
       const res = await fetch("/api/summary", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ groupId, week, prompt: prompt.trim() || undefined }),
+        body: JSON.stringify(body),
         signal: controller.signal,
       });
 
@@ -188,12 +200,28 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
               id="sum-group"
               value={groupId}
               onChange={(e) => setGroupId(e.target.value)}
-              disabled={groups.length === 0}
             >
-              {groups.length === 0 && <option value="">No groups available</option>}
+              <option value={NO_SELECTION}>None</option>
               {groups.map((g) => (
                 <option key={g.slashworkId} value={g.slashworkId}>
                   {g.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="sum-field">
+            <label htmlFor="sum-repo">Repository</label>
+            <select
+              id="sum-repo"
+              value={repo}
+              onChange={(e) => setRepo(e.target.value)}
+              disabled={repos.length === 0}
+            >
+              <option value={NO_SELECTION}>{repos.length === 0 ? "No repos configured" : "None"}</option>
+              {repos.map((r) => (
+                <option key={r.slug} value={r.slug}>
+                  {r.slug}
                 </option>
               ))}
             </select>
@@ -245,7 +273,7 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
             <button
               type="submit"
               className="sum-submit"
-              disabled={loading || groups.length === 0}
+              disabled={loading || nothingSelected}
             >
               {loading ? "Summarizing..." : "Summarize"}
             </button>
@@ -255,6 +283,9 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
               </button>
             )}
           </div>
+          {nothingSelected && (
+            <span className="sum-hint">Select a group or repository to summarize</span>
+          )}
         </div>
       </form>
 
@@ -277,9 +308,11 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames }
         <div className="sum-result">
           <div className="sum-result-header">
             <span className="sum-result-label">{weekLabel}</span>
-            <span className="sum-result-count">
-              {postCount} post{postCount !== 1 ? "s" : ""}
-            </span>
+            {postCount !== null && postCount > 0 && (
+              <span className="sum-result-count">
+                {postCount} post{postCount !== 1 ? "s" : ""}
+              </span>
+            )}
           </div>
           <div className="sum-result-body">{summary}</div>
 

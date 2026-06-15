@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { getDiscoveredGroups, getDigestConfig, getAuthToken, updateDigestLastRun } from "./db";
 import { fetchGroupPosts, formatPosts } from "./summary-utils";
+import { listOwnerRepos, fetchRepoActivity, formatRepoActivity } from "./github-utils";
 import { postToSlashwork } from "./slashwork";
 
 type LogFn = (level: string, message: string) => void;
@@ -36,19 +37,29 @@ export async function generateDigest(
   endDate: string,
   prompt?: string,
   log: LogFn = () => {},
-): Promise<{ markdown: string; groupCount: number; totalPosts: number }> {
+): Promise<{ markdown: string; groupCount: number; totalPosts: number; repoCount: number }> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   const groups = await getDiscoveredGroups();
   const activeGroups = groups.filter((g) => g.name.length > 0);
 
-  log("info", `Digest: fetching posts from ${activeGroups.length} groups`);
+  const githubOwner = process.env.GITHUB_OWNER;
+  const githubToken = process.env.GITHUB_TOKEN;
+  const githubRepoNames = githubOwner
+    ? await listOwnerRepos(githubOwner, githubToken).catch((err) => {
+        log("error", `Digest: failed to list repos for ${githubOwner}: ${err}`);
+        return [] as string[];
+      })
+    : [];
+  const githubRepos = githubRepoNames.map((repo) => ({ owner: githubOwner!, repo }));
 
-  // Per-group summaries — fetch + summarize all groups in parallel
+  log("info", `Digest: fetching posts from ${activeGroups.length} groups and ${githubRepos.length} repos`);
+
   const anthropic = new Anthropic({ apiKey });
 
-  const results = await Promise.allSettled(
+  // Per-group summaries
+  const groupResults = await Promise.allSettled(
     activeGroups.map(async (group) => {
       const posts = await fetchGroupPosts(graphqlUrl, authToken, group.slashworkId, startDate, endDate);
       if (posts.length === 0) return null;
@@ -70,11 +81,11 @@ export async function generateDigest(
       if (!summary) return null;
 
       log("info", `Digest: ${group.name} — ${posts.length} posts summarized`);
-      return { name: group.name, summary, postCount: posts.length };
+      return { label: `Group: ${group.name}`, summary, postCount: posts.length };
     }),
   );
 
-  const groupSummaries = results.flatMap((r, i) => {
+  const groupSummaries = groupResults.flatMap((r, i) => {
     if (r.status === "rejected") {
       log("error", `Digest: failed to process group "${activeGroups[i]!.name}": ${r.reason}`);
       return [];
@@ -82,17 +93,62 @@ export async function generateDigest(
     return r.value ? [r.value] : [];
   });
 
-  if (groupSummaries.length === 0) {
-    return { markdown: "No activity found across any groups for this period.", groupCount: 0, totalPosts: 0 };
+  // Per-repo summaries
+  const repoResults = await Promise.allSettled(
+    githubRepos.map(async (gh) => {
+      const activity = await fetchRepoActivity(gh.owner, gh.repo, startDate, endDate, githubToken);
+      const formatted = formatRepoActivity(gh.owner, gh.repo, activity);
+
+      const hasActivity =
+        activity.mergedPRs.length > 0 ||
+        activity.openedPRs.length > 0 ||
+        activity.releases.length > 0 ||
+        activity.commits.length > 0;
+
+      if (!hasActivity) return null;
+
+      const aiResponse = await anthropic.messages.create({
+        model: "claude-haiku-4-5",
+        max_tokens: 1024,
+        messages: [
+          {
+            role: "user",
+            content: `Summarize the following GitHub activity from "${gh.owner}/${gh.repo}". Be concise — 2-4 bullet points max:\n\n${formatted}`,
+          },
+        ],
+      });
+
+      const block = aiResponse.content[0];
+      const summary = block && block.type === "text" ? block.text : "";
+      if (!summary) return null;
+
+      const postCount = activity.mergedPRs.length + activity.openedPRs.length + activity.releases.length + activity.commits.length;
+      log("info", `Digest: ${gh.owner}/${gh.repo} — ${postCount} events summarized`);
+      return { label: `Repo: ${gh.owner}/${gh.repo}`, summary, postCount };
+    }),
+  );
+
+  const repoSummaries = repoResults.flatMap((r, i) => {
+    if (r.status === "rejected") {
+      log("error", `Digest: failed to process repo "${githubRepos[i]!.owner}/${githubRepos[i]!.repo}": ${r.reason}`);
+      return [];
+    }
+    return r.value ? [r.value] : [];
+  });
+
+  const allSummaries = [...groupSummaries, ...repoSummaries];
+
+  if (allSummaries.length === 0) {
+    return { markdown: "No activity found across any groups or repositories for this period.", groupCount: 0, totalPosts: 0, repoCount: 0 };
   }
 
   // Meta-summary
-  const perGroupText = groupSummaries
-    .map((g) => `## ${g.name} (${g.postCount} posts)\n${g.summary}`)
+  const perSourceText = allSummaries
+    .map((s) => `## ${s.label} (${s.postCount} items)\n${s.summary}`)
     .join("\n\n");
 
   const metaPrompt = prompt ||
-    "Create a unified weekly digest from the per-group summaries below. Structure it as: a brief overall overview, then key highlights organized by theme (not by group), then any action items. Use markdown formatting.";
+    "Create a unified weekly digest from the per-source summaries below. Structure it as: a brief overall overview, then key highlights organized by theme (not by source), then any action items. Use markdown formatting.";
 
   const metaResponse = await anthropic.messages.create({
     model: "claude-haiku-4-5",
@@ -100,7 +156,7 @@ export async function generateDigest(
     messages: [
       {
         role: "user",
-        content: `${metaPrompt}\n\nPer-group summaries:\n\n${perGroupText}`,
+        content: `${metaPrompt}\n\nPer-source summaries:\n\n${perSourceText}`,
       },
     ],
   });
@@ -109,7 +165,7 @@ export async function generateDigest(
   const markdown = metaBlock && metaBlock.type === "text" ? metaBlock.text : "";
   const totalPosts = groupSummaries.reduce((sum, g) => sum + g.postCount, 0);
 
-  return { markdown, groupCount: groupSummaries.length, totalPosts };
+  return { markdown, groupCount: groupSummaries.length, totalPosts, repoCount: repoSummaries.length };
 }
 
 export function startWeeklyDigestPoller(

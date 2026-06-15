@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
 import { getGroups, getAuthTokens, getDiscoveredGroups } from "@/src/db";
+import { listOwnerRepos } from "@/src/github-utils";
 import "./summary.css";
 
 const SummaryForm = nextDynamic(() => import("./summary-form"));
@@ -17,6 +18,13 @@ async function SummaryFormSection() {
     .filter((g) => g.name.length > 0)
     .map((g) => ({ name: g.name, slashworkId: g.slashworkId }));
 
+  const githubOwner = process.env.GITHUB_OWNER;
+  const githubToken = process.env.GITHUB_TOKEN;
+  const githubRepoNames = githubOwner
+    ? await listOwnerRepos(githubOwner, githubToken).catch(() => [] as string[])
+    : [];
+  const repos = githubRepoNames.map((repo) => ({ slug: `${githubOwner}/${repo}` }));
+
   return (
     <>
       {!dbAvailable && (
@@ -29,6 +37,7 @@ async function SummaryFormSection() {
         groups={allGroups}
         configuredGroups={groups.map((g) => g.name)}
         authTokenNames={authTokens.map((t) => t.name)}
+        repos={repos}
       />
     </>
   );
