@@ -153,7 +153,7 @@ export async function POST(request: Request) {
       messages: [
         {
           role: "user",
-          content: `${body.prompt || "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:"}\n\nSource: ${source} | ${label}\n\n${formatted}`,
+          content: `${body.prompt || "Summarize the following activity. Give a concise overview of what was shipped or completed, key discussions and decisions, and any open questions or follow-ups:"}\n\nSource: ${source} | ${label}\n\n${formatted}`,
         },
       ],
     });

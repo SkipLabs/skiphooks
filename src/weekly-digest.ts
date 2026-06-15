@@ -113,7 +113,7 @@ export async function generateDigest(
         messages: [
           {
             role: "user",
-            content: `Summarize the following GitHub activity from "${gh.owner}/${gh.repo}". Be concise — 2-4 bullet points max:\n\n${formatted}`,
+            content: `Summarize the following GitHub activity from "${gh.owner}/${gh.repo}". Highlight what shipped (merged PRs, releases), what is actively in review (open PRs), and any notable commits. Be concise — 2-4 bullet points max:\n\n${formatted}`,
           },
         ],
       });
@@ -148,7 +148,7 @@ export async function generateDigest(
     .join("\n\n");
 
   const metaPrompt = prompt ||
-    "Create a unified weekly digest from the per-source summaries below. Structure it as: a brief overall overview, then key highlights organized by theme (not by source), then any action items. Use markdown formatting.";
+    "Create a unified weekly digest from the per-source summaries below. Sources include team discussions (Slashwork groups) and code activity (GitHub repositories). Structure it as: a brief overall overview paragraph, then key highlights organized by theme rather than by source, then any open questions or follow-ups from discussions. Use markdown formatting. Focus on what the team shipped and decided — do not invent action items from code activity.";
 
   const metaResponse = await anthropic.messages.create({
     model: "claude-haiku-4-5",

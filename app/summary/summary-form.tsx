@@ -44,23 +44,23 @@ function buildWeekOptions() {
 const PROMPT_TEMPLATES = [
   {
     name: "General summary",
-    prompt: "Summarize the following messages. Give a concise overview of the key topics, decisions, and action items discussed:",
+    prompt: "Summarize the following activity. Give a concise overview of what was shipped or completed, key discussions and decisions, and any open questions or follow-ups:",
   },
   {
     name: "Engineering highlights",
-    prompt: "Summarize the following messages focusing on engineering work: new features shipped, bugs fixed, technical decisions made, and infrastructure changes. Be concise and use bullet points:",
+    prompt: "Summarize the following activity focusing on engineering work: features shipped, PRs merged, bugs fixed, technical decisions made, and infrastructure changes. Be concise and use bullet points:",
   },
   {
     name: "Blockers & risks",
-    prompt: "Review the following messages and extract any blockers, risks, open questions, or unresolved issues. Group them by severity. If none are found, say so briefly:",
+    prompt: "Review the following activity and extract any blockers, risks, open questions, or unresolved issues. Group them by severity. If none are found, say so briefly:",
   },
   {
     name: "Team wins",
-    prompt: "Review the following messages and highlight team wins, completed milestones, positive outcomes, and shipped features. Keep it upbeat and concise:",
+    prompt: "Review the following activity and highlight team wins, completed milestones, positive outcomes, and shipped features. Keep it upbeat and concise:",
   },
   {
     name: "Action items",
-    prompt: "Extract all action items, follow-ups, and next steps from the following messages. List each with the responsible person if mentioned:",
+    prompt: "Review the following activity and extract action items, follow-ups, and next steps from discussions. For GitHub activity, note any PRs awaiting review or open issues needing attention. List each with the responsible person if mentioned:",
   },
 ];
 
