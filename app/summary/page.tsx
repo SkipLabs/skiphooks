@@ -14,16 +14,9 @@ async function SummaryFormSection() {
     ? await Promise.all([getGroups(), getAuthTokens(), getDiscoveredGroups()])
     : [[], [], []];
 
-  // Merge configured groups (named entries from `groups` table) with discovered groups
-  // from the 24h sync poller. Configured entries take priority; discovered-only groups
-  // are appended so all visible Slashwork groups appear in the dropdown.
-  const configuredById = new Map(groups.map((g) => [g.slashworkId, g.name]));
-  const allGroups = [
-    ...groups.map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
-    ...discoveredGroups
-      .filter((g) => g.name.length > 0 && !configuredById.has(g.slashworkId))
-      .map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
-  ];
+  const allGroups = discoveredGroups
+    .filter((g) => g.name.length > 0)
+    .map((g) => ({ name: g.name, slashworkId: g.slashworkId }));
 
   const githubOwner = process.env.GITHUB_OWNER;
   const githubToken = process.env.GITHUB_TOKEN;

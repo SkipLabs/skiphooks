@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import nextDynamic from "next/dynamic";
-import { getAuthTokens, getGroups, getDiscoveredGroups, getDigestConfig } from "@/src/db";
+import { getAuthTokens, getDiscoveredGroups, getDigestConfig } from "@/src/db";
 import "./digest.css";
 
 const DigestForm = nextDynamic(() => import("./digest-form"));
@@ -9,17 +9,13 @@ export const dynamic = "force-dynamic";
 
 async function DigestFormSection() {
   const dbAvailable = !!process.env.POSTGRESQL_ADDON_URI;
-  const [authTokens, configuredGroups, discoveredGroups, digestConfig] = dbAvailable
-    ? await Promise.all([getAuthTokens(), getGroups(), getDiscoveredGroups(), getDigestConfig()])
-    : [[], [], [], null];
+  const [authTokens, discoveredGroups, digestConfig] = dbAvailable
+    ? await Promise.all([getAuthTokens(), getDiscoveredGroups(), getDigestConfig()])
+    : [[], [], null];
 
-  const configuredById = new Map(configuredGroups.map((g) => [g.slashworkId, g.name]));
-  const groups = [
-    ...configuredGroups.map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
-    ...discoveredGroups
-      .filter((g) => g.name.length > 0 && !configuredById.has(g.slashworkId))
-      .map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
-  ];
+  const groups = discoveredGroups
+    .filter((g) => g.name.length > 0)
+    .map((g) => ({ name: g.name, slashworkId: g.slashworkId }));
 
   return (
     <>
