@@ -52,7 +52,7 @@ export default function DiscoveredGroupsLive({
     <div className="sw-section sw-section--wide">
       <div className="sw-section-header">
         <h2 className="sw-section-title">
-          Slashwork Groups (discovered)
+          Slashwork Groups
           {connected && (
             <span className="sw-badge sw-badge--group" style={{ marginLeft: "8px", fontSize: "0.7em" }}>
               live
@@ -61,7 +61,7 @@ export default function DiscoveredGroupsLive({
         </h2>
         <span className="sw-count">{groups.length}</span>
       </div>
-      <table className="sw-table" aria-label="Discovered Slashwork groups">
+      <table className="sw-table" aria-label="Slashwork groups">
         <thead>
           <tr>
             <th scope="col">Name</th>
@@ -75,7 +75,7 @@ export default function DiscoveredGroupsLive({
           {groups.length === 0 ? (
             <tr>
               <td colSpan={5} className="sw-empty">
-                No groups discovered yet — sync runs on startup and every 24h
+                No groups discovered yet — sync runs on startup and every 24h via mentionGroups(FEED)
               </td>
             </tr>
           ) : (
