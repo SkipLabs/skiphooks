@@ -3,7 +3,7 @@ import type { SlashworkConnection } from "./slashwork";
 
 const GROUP_SEARCH_QUERY = `
   query DiscoverGroups {
-    groupSearch(query: { name: "" }, first: -1) {
+    mentionGroups(first: -1, displayType: FEED) {
       edges {
         node {
           id
@@ -16,7 +16,7 @@ const GROUP_SEARCH_QUERY = `
 
 interface GroupSearchResponse {
   data?: {
-    groupSearch: {
+    mentionGroups: {
       edges: Array<{ node: { id: string; name: string } }>;
     };
   };
@@ -45,7 +45,7 @@ export async function syncSlashworkGroups(
     throw new Error(`GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`);
   }
 
-  const groups = result.data?.groupSearch?.edges?.map((e) => ({
+  const groups = result.data?.mentionGroups?.edges?.map((e) => ({
     slashworkId: e.node.id,
     name: e.node.name,
   })) ?? [];
