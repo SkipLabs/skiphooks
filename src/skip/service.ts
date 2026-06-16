@@ -7,13 +7,6 @@ import type {
 } from "@skipruntime/core";
 import { postgresExternalService } from "./postgres-adapter";
 
-type DbSlashworkGroup = {
-  slashwork_id: string;
-  name: string;
-  discovered_at: string;
-  last_seen_at: string;
-};
-
 type DbAuthToken = {
   name: string;
   token: string;
@@ -37,22 +30,10 @@ type ServiceInputs = {
 };
 
 type ServiceOutputs = {
-  slashworkGroups: EagerCollection<string, DbSlashworkGroup>;
   authTokens: EagerCollection<string, DbAuthToken>;
   groups: EagerCollection<string, DbGroup>;
   routes: EagerCollection<string, DbRoute>;
 };
-
-class DiscoveredGroupsResource implements Resource<ServiceOutputs> {
-  constructor(_params: Json) {}
-
-  instantiate(
-    collections: ServiceOutputs,
-    _context: Context,
-  ): EagerCollection<string, DbSlashworkGroup> {
-    return collections.slashworkGroups;
-  }
-}
 
 class AuthTokensResource implements Resource<ServiceOutputs> {
   constructor(_params: Json) {}
@@ -93,7 +74,6 @@ export const skipService: SkipService<ServiceInputs, ServiceOutputs> = {
   },
 
   resources: {
-    discoveredGroups: DiscoveredGroupsResource,
     authTokens: AuthTokensResource,
     groups: GroupsResource,
     routes: RoutesResource,
@@ -105,12 +85,6 @@ export const skipService: SkipService<ServiceInputs, ServiceOutputs> = {
     _inputs: ServiceInputs,
     context: Context,
   ): ServiceOutputs {
-    const slashworkGroups = context.useExternalResource<string, DbSlashworkGroup>({
-      service: "postgres",
-      identifier: "slashwork_groups",
-      params: { key: { col: "slashwork_id", type: "TEXT" } },
-    });
-
     const authTokens = context.useExternalResource<string, DbAuthToken>({
       service: "postgres",
       identifier: "auth_tokens",
@@ -129,6 +103,6 @@ export const skipService: SkipService<ServiceInputs, ServiceOutputs> = {
       params: { key: { col: "name", type: "TEXT" } },
     });
 
-    return { slashworkGroups, authTokens, groups, routes };
+    return { authTokens, groups, routes };
   },
 };

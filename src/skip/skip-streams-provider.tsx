@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { applySkipUpdates } from "./parse-stream";
 
-type StreamName = "authTokens" | "groups" | "routes" | "discoveredGroups";
+type StreamName = "authTokens" | "groups" | "routes";
 
 interface StreamState<T> {
   items: Map<string, T>;

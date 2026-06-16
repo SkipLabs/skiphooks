@@ -184,54 +184,6 @@ export async function getAuthToken(name: string): Promise<string | null> {
   return result.rows[0]?.token ?? null;
 }
 
-// Slashwork group discovery
-
-export interface DiscoveredGroup {
-  slashworkId: string;
-  name: string;
-  discoveredAt: Date;
-  lastSeenAt: Date;
-}
-
-export async function upsertDiscoveredGroups(
-  groups: Array<{ slashworkId: string; name: string }>,
-): Promise<void> {
-  if (groups.length === 0) return;
-  const pool = getPool();
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    for (const g of groups) {
-      await client.query(
-        `INSERT INTO slashwork_groups (slashwork_id, name, last_seen_at)
-         VALUES ($1, $2, now())
-         ON CONFLICT (slashwork_id) DO UPDATE SET name = $2, last_seen_at = now()`,
-        [g.slashworkId, g.name],
-      );
-    }
-    await client.query("COMMIT");
-  } catch (err) {
-    await client.query("ROLLBACK");
-    throw err;
-  } finally {
-    client.release();
-  }
-}
-
-export async function getDiscoveredGroups(): Promise<DiscoveredGroup[]> {
-  const result = await getPool().query<{
-    slashwork_id: string;
-    name: string;
-    discovered_at: Date;
-    last_seen_at: Date;
-  }>("SELECT slashwork_id, name, discovered_at, last_seen_at FROM slashwork_groups ORDER BY name");
-  return result.rows.map((row) => ({
-    slashworkId: row.slashwork_id,
-    name: row.name,
-    discoveredAt: new Date(row.discovered_at),
-    lastSeenAt: new Date(row.last_seen_at),
-  }));
-}
 
 export async function getAllRoutes(): Promise<DbRoute[]> {
   const result = await getPool().query<{

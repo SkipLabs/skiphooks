@@ -1,6 +1,6 @@
 import { getSkipBroker } from "@/src/skip/broker";
 
-const RESOURCES = ["authTokens", "groups", "routes", "discoveredGroups"] as const;
+const RESOURCES = ["authTokens", "groups", "routes"] as const;
 
 export async function GET() {
   try {

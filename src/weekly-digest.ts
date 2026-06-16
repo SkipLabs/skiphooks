@@ -1,7 +1,8 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { getDiscoveredGroups, getDigestConfig, getAuthToken, updateDigestLastRun } from "./db";
+import { getDigestConfig, getAuthToken, updateDigestLastRun } from "./db";
 import { fetchGroupPosts, formatPosts } from "./summary-utils";
 import { listOwnerRepos, fetchRepoActivity, formatRepoActivity } from "./github-utils";
+import { fetchSlashworkGroups } from "./slashwork-sync";
 import { postToSlashwork } from "./slashwork";
 
 type LogFn = (level: string, message: string) => void;
@@ -41,8 +42,7 @@ export async function generateDigest(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const groups = await getDiscoveredGroups();
-  const activeGroups = groups.filter((g) => g.name.length > 0);
+  const activeGroups = await fetchSlashworkGroups({ graphqlUrl, authToken });
 
   const githubOwner = process.env.GITHUB_OWNER;
   const githubToken = process.env.GITHUB_TOKEN;

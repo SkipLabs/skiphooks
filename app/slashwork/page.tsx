@@ -1,5 +1,6 @@
 import nextDynamic from "next/dynamic";
-import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getDiscoveredGroups } from "@/src/db";
+import { getAuthTokens, getGroups, getRoutes, getCalendarUsers, getAuthToken } from "@/src/db";
+import { fetchSlashworkGroups } from "@/src/slashwork-sync";
 import { SkipStreamsProvider } from "@/src/skip/skip-streams-provider";
 import AuthTokensLive from "./auth-tokens-live";
 import GroupsLive from "./groups-live";
@@ -14,14 +15,21 @@ export const dynamic = "force-dynamic";
 type PageData = Awaited<ReturnType<typeof loadPageData>>;
 
 async function loadPageData() {
-  const [authTokens, groups, routes, calendarUsers, discoveredGroups] = await Promise.all([
+  const [authTokens, groups, routes, calendarUsers] = await Promise.all([
     getAuthTokens(),
     getGroups(),
     getRoutes(),
     getCalendarUsers(),
-    getDiscoveredGroups(),
   ]);
-  return { authTokens, groups, routes, calendarUsers, discoveredGroups };
+
+  const graphqlUrl = process.env.SLASHWORK_GRAPHQL_URL;
+  const firstTokenName = authTokens[0]?.name;
+  const firstToken = firstTokenName ? await getAuthToken(firstTokenName) : null;
+  const slashworkGroups = graphqlUrl && firstToken
+    ? await fetchSlashworkGroups({ graphqlUrl, authToken: firstToken }).catch(() => [])
+    : [];
+
+  return { authTokens, groups, routes, calendarUsers, slashworkGroups };
 }
 
 function AdminSection({ authTokens, groups }: Pick<PageData, "authTokens" | "groups">) {
@@ -99,15 +107,10 @@ function CalendarSection({ calendarUsers }: Pick<PageData, "calendarUsers">) {
   );
 }
 
-function DiscoveredGroupsSection({ discoveredGroups, groups }: Pick<PageData, "discoveredGroups" | "groups">) {
+function SlashworkGroupsSection({ slashworkGroups, groups }: Pick<PageData, "slashworkGroups" | "groups">) {
   return (
     <DiscoveredGroupsLive
-      initialGroups={discoveredGroups.map((g) => ({
-        slashworkId: g.slashworkId,
-        name: g.name,
-        discoveredAt: g.discoveredAt.toISOString(),
-        lastSeenAt: g.lastSeenAt.toISOString(),
-      }))}
+      groups={slashworkGroups}
       configuredGroupIds={groups.map((g) => g.slashworkId)}
     />
   );
@@ -135,7 +138,7 @@ export default async function SlashworkPage() {
             <GroupsSection groups={data.groups} />
             <RoutesSection routes={data.routes} />
             <CalendarSection calendarUsers={data.calendarUsers} />
-            <DiscoveredGroupsSection discoveredGroups={data.discoveredGroups} groups={data.groups} />
+            <SlashworkGroupsSection slashworkGroups={data.slashworkGroups} groups={data.groups} />
           </div>
         </SkipStreamsProvider>
       </main>

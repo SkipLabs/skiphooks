@@ -5,7 +5,6 @@ import { runMigrations, getAllRoutes, getCalendarUsers, getAuthToken } from "@/s
 import { validateConnection, type SlashworkConnection } from "@/src/slashwork";
 import { validateCalendarAuth } from "@/src/calendar/auth";
 import { startCalendarPoller } from "@/src/calendar/poller";
-import { startGroupSyncPoller } from "@/src/slashwork-sync";
 import { startWeeklyDigestPoller } from "@/src/weekly-digest";
 import { runService, type SkipServer } from "@skipruntime/server";
 import { skipService } from "@/src/skip/service";
@@ -15,7 +14,7 @@ function log(level: string, message: string) {
   console.log(`[${new Date().toISOString()}] [${level}] ${message}`);
 }
 
-const SKIP_MONITORED_TABLES = ["slashwork_groups", "auth_tokens", "groups", "routes"];
+const SKIP_MONITORED_TABLES = ["auth_tokens", "groups", "routes"];
 
 let skipStarted = false;
 let skipServer: SkipServer | null = null;
@@ -208,14 +207,7 @@ export async function register() {
         (err) => log("error", `Route ${route.name}: ${err}`),
       );
     }
-    // Start group sync poller using the first route's auth token
     if (routes.length > 0) {
-      startGroupSyncPoller(
-        { graphqlUrl: config.slashwork.graphqlUrl, authToken: routes[0]!.authToken },
-        log,
-      );
-      log("info", "Group sync: poller started (24h interval)");
-
       startWeeklyDigestPoller(config.slashwork.graphqlUrl, log);
       log("info", "Weekly digest: poller started (hourly check, posts Thu 2pm UTC)");
     }
