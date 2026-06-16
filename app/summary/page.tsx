@@ -14,9 +14,15 @@ async function SummaryFormSection() {
     ? await Promise.all([getGroups(), getAuthTokens(), getDiscoveredGroups()])
     : [[], [], []];
 
-  const allGroups = discoveredGroups
-    .filter((g) => g.name.length > 0)
-    .map((g) => ({ name: g.name, slashworkId: g.slashworkId }));
+  // Merge configured groups (authoritative) with discovered groups, deduplicated by slashworkId.
+  // Configured groups take priority so their names are used when both sources have the same ID.
+  const seen = new Set(groups.map((g) => g.slashworkId));
+  const allGroups = [
+    ...groups.map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
+    ...discoveredGroups
+      .filter((g) => g.name.length > 0 && !seen.has(g.slashworkId))
+      .map((g) => ({ name: g.name, slashworkId: g.slashworkId })),
+  ];
 
   const githubOwner = process.env.GITHUB_OWNER;
   const githubToken = process.env.GITHUB_TOKEN;
