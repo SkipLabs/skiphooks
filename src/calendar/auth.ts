@@ -12,6 +12,7 @@ interface CachedToken {
 }
 
 let cachedToken: CachedToken | null = null;
+let inFlightRefresh: Promise<string> | null = null;
 
 function base64url(input: string | Buffer): string {
   const buf = typeof input === "string" ? Buffer.from(input) : input;
@@ -64,6 +65,17 @@ export async function getAccessToken(serviceAccountKey: string): Promise<string>
     return cachedToken.accessToken;
   }
 
+  // Dedup concurrent refreshes (e.g. parallel calendar polls) so they share a
+  // single JWT sign + token exchange instead of each hitting Google's endpoint.
+  if (inFlightRefresh) return inFlightRefresh;
+
+  inFlightRefresh = refreshAccessToken(serviceAccountKey).finally(() => {
+    inFlightRefresh = null;
+  });
+  return inFlightRefresh;
+}
+
+async function refreshAccessToken(serviceAccountKey: string): Promise<string> {
   const key = parseServiceAccountKey(serviceAccountKey);
   const jwt = createJwt(key);
 
@@ -105,4 +117,5 @@ export async function validateCalendarAuth(
 /** Reset cached token (for tests). */
 export function _resetTokenCache(): void {
   cachedToken = null;
+  inFlightRefresh = null;
 }
