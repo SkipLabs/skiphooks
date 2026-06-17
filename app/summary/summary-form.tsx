@@ -125,7 +125,9 @@ export default function SummaryForm({ groups, configuredGroups, authTokenNames, 
     setWeekLabel("");
 
     try {
-      const body: Record<string, string> = { week, prompt: prompt.trim() || undefined! };
+      const body: Record<string, string> = { week };
+      const trimmedPrompt = prompt.trim();
+      if (trimmedPrompt) body.prompt = trimmedPrompt;
       if (groupId !== NO_SELECTION) body.groupId = groupId;
       if (repo !== NO_SELECTION) body.repo = repo;
 
