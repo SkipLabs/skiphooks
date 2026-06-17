@@ -1,5 +1,6 @@
 import type { SlashworkConnection } from "./slashwork";
 import { fetchWithRetry } from "./retry";
+import { assertNoGraphqlErrors } from "./graphql";
 
 const FETCH_GROUPS_QUERY = `
   query FetchGroups {
@@ -40,9 +41,7 @@ export async function fetchSlashworkGroups(
   }
 
   const result = (await response.json()) as FetchGroupsResponse;
-  if (result.errors?.length) {
-    throw new Error(`GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`);
-  }
+  assertNoGraphqlErrors(result, "GraphQL error");
 
   return (result.data?.mentionGroups?.edges ?? [])
     .map((e) => ({ slashworkId: e.node.id, name: e.node.name }))

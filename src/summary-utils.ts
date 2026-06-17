@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "./retry";
+import { assertNoGraphqlErrors } from "./graphql";
 
 export const FETCH_POSTS_QUERY = `
   query FetchGroupPosts($groupId: ID!, $first: Int!, $after: String) {
@@ -138,9 +139,7 @@ export async function fetchGroupPosts(
     }
 
     const result = (await response.json()) as FetchResponse;
-    if (result.errors?.length) {
-      throw new Error(`GraphQL error: ${result.errors.map((e) => e.message).join(", ")}`);
-    }
+    assertNoGraphqlErrors(result, "GraphQL error");
 
     const postsData = result.data?.fetch__Group?.posts;
     const nodes = postsData?.edges?.map((e) => e.node) ?? [];

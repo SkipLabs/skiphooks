@@ -1,4 +1,5 @@
 import { fetchWithRetry } from "./retry";
+import { assertNoGraphqlErrors } from "./graphql";
 
 const VIEWER_QUERY = `
   query Viewer {
@@ -40,11 +41,7 @@ export async function validateConnection(
   const result = (await response.json()) as {
     errors?: Array<{ message: string }>;
   };
-  if (result.errors?.length) {
-    throw new Error(
-      `Slashwork auth failed: ${result.errors.map((e) => e.message).join(", ")}`,
-    );
-  }
+  assertNoGraphqlErrors(result, "Slashwork auth failed");
 }
 
 export async function postToSlashwork(
@@ -77,9 +74,5 @@ export async function postToSlashwork(
   const result = (await response.json()) as {
     errors?: Array<{ message: string }>;
   };
-  if (result.errors?.length) {
-    throw new Error(
-      `Slashwork GraphQL errors: ${result.errors.map((e) => e.message).join(", ")}`,
-    );
-  }
+  assertNoGraphqlErrors(result, "Slashwork GraphQL errors");
 }
