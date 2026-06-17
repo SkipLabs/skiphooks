@@ -48,3 +48,8 @@ export function getAppConfig(): AppConfig {
   if (!cachedConfig) cachedConfig = loadAppConfig();
   return cachedConfig;
 }
+
+/** Reset the memoized config (for tests). */
+export function _resetConfigCache(): void {
+  cachedConfig = null;
+}
