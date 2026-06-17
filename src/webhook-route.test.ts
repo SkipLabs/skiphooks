@@ -9,13 +9,17 @@ const AUTH_TOKEN = "sw-token-abc";
 // Mutable references so individual tests can override return values
 let resolveRoute: () => Promise<{ targetId: string; authToken: string } | null> = () =>
   Promise.resolve({ targetId: TARGET_ID, authToken: AUTH_TOKEN });
+let resolveRouteCallCount = 0;
 
 const postToSlashworkMock = mock(
   (_connection: unknown, _streamId: string, _markdown: string) => Promise.resolve()
 );
 
 mock.module("@/src/db", () => ({
-  resolveRouteFromDb: (_routeName: string) => resolveRoute(),
+  resolveRouteFromDb: (_routeName: string) => {
+    resolveRouteCallCount++;
+    return resolveRoute();
+  },
 }));
 
 mock.module("@/src/slashwork", () => ({
@@ -49,6 +53,7 @@ function makeRequest(body: string, eventType: string, sig?: string): Request {
 
 afterEach(() => {
   resolveRoute = () => Promise.resolve({ targetId: TARGET_ID, authToken: AUTH_TOKEN });
+  resolveRouteCallCount = 0;
   postToSlashworkMock.mockClear();
 });
 
@@ -66,6 +71,26 @@ describe("POST /github/[route]", () => {
     const res = await POST(makeRequest(body, "pull_request", "sha256=badsignature"), makeCtx());
     expect(res.status).toBe(401);
     expect(postToSlashworkMock).not.toHaveBeenCalled();
+  });
+
+  test("does not touch the database when the signature is invalid", async () => {
+    const body = JSON.stringify({ action: "opened" });
+    const res = await POST(makeRequest(body, "pull_request", "sha256=badsignature"), makeCtx());
+    expect(res.status).toBe(401);
+    // Signature is verified before any DB work — resolveRouteFromDb must not run.
+    expect(resolveRouteCallCount).toBe(0);
+  });
+
+  test("does not touch the database when the signature header is missing", async () => {
+    const body = JSON.stringify({ action: "opened" });
+    const req = new Request("https://example.com/github/skipper", {
+      method: "POST",
+      headers: { "x-github-event": "pull_request", "content-type": "application/json" },
+      body,
+    });
+    const res = await POST(req, makeCtx());
+    expect(res.status).toBe(401);
+    expect(resolveRouteCallCount).toBe(0);
   });
 
   test("returns 200 and posts to Slashwork for a valid PR opened event", async () => {
