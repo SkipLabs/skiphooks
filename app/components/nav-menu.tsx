@@ -2,8 +2,45 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Show, UserButton, SignInButton } from "@clerk/nextjs";
+import { Show, UserButton, SignInButton, useUser } from "@clerk/nextjs";
 import "./nav-menu.css";
+
+function NavAuth() {
+  const { isLoaded, isSignedIn, user } = useUser();
+
+  if (!isLoaded) {
+    return (
+      <div className="nav-user nav-user--loading" aria-hidden="true">
+        <div className="nav-user-avatar loading-skeleton" />
+        <div className="nav-user-meta">
+          <div className="nav-user-skeleton-line loading-skeleton" />
+          <div className="nav-user-skeleton-line nav-user-skeleton-line--sub loading-skeleton" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <Show when="signed-out">
+        <SignInButton />
+      </Show>
+    );
+  }
+
+  const name = user.fullName ?? user.username ?? "Account";
+  const email = user.primaryEmailAddress?.emailAddress;
+
+  return (
+    <div className="nav-user">
+      <UserButton />
+      <div className="nav-user-meta">
+        <span className="nav-user-name">{name}</span>
+        {email ? <span className="nav-user-email">{email}</span> : null}
+      </div>
+    </div>
+  );
+}
 
 export default function NavMenu() {
   const [open, setOpen] = useState(false);
@@ -103,12 +140,7 @@ export default function NavMenu() {
         <div className="nav-divider" />
 
         <div className="nav-auth">
-          <Show when="signed-out">
-            <SignInButton />
-          </Show>
-          <Show when="signed-in">
-            <UserButton />
-          </Show>
+          <NavAuth />
         </div>
       </nav>
     </>

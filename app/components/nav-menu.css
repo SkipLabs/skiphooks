@@ -140,6 +140,60 @@
   padding: 0 1.5rem;
 }
 
+/* ── Signed-in user block (avatar + name/email) ── */
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.25rem;
+}
+
+.nav-user-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nav-user-name {
+  font-family: var(--cfg-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--cfg-text);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-user-email {
+  font-family: var(--cfg-mono);
+  font-size: 0.6875rem;
+  color: var(--cfg-text-muted);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Loading skeleton (matches signed-in layout to avoid shift) ── */
+.nav-user-avatar {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+
+.nav-user-skeleton-line {
+  height: 9px;
+  width: 6.5rem;
+}
+
+.nav-user-skeleton-line--sub {
+  height: 8px;
+  width: 9rem;
+}
+
 /* ── Main content offset ── */
 .nav-main {
   transition: margin-left 0.2s ease;
