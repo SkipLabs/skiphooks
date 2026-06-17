@@ -78,21 +78,23 @@ export interface FetchResponse {
   errors?: Array<{ message: string }>;
 }
 
+/** Format an ISO timestamp as "YYYY-MM-DD HH:MM" (UTC). */
+export function fmtTimestamp(iso: string): string {
+  return new Date(iso).toISOString().slice(0, 16).replace("T", " ");
+}
+
 export function formatPosts(posts: PostNode[]): string {
   const lines: string[] = [];
   for (const post of posts) {
-    const date = new Date(post.created).toISOString().slice(0, 16).replace("T", " ");
-    lines.push(`--- ${post.author.name} [${date}] ---`);
+    lines.push(`--- ${post.author.name} [${fmtTimestamp(post.created)}] ---`);
     lines.push(post.markdown);
 
     for (const { node: comment } of post.comments.edges) {
-      const cDate = new Date(comment.created).toISOString().slice(0, 16).replace("T", " ");
-      lines.push(`  > ${comment.author.name} [${cDate}]:`);
+      lines.push(`  > ${comment.author.name} [${fmtTimestamp(comment.created)}]:`);
       lines.push(`  ${comment.markdown}`);
 
       for (const { node: reply } of comment.replies.edges) {
-        const rDate = new Date(reply.created).toISOString().slice(0, 16).replace("T", " ");
-        lines.push(`    >> ${reply.author.name} [${rDate}]:`);
+        lines.push(`    >> ${reply.author.name} [${fmtTimestamp(reply.created)}]:`);
         lines.push(`    ${reply.markdown}`);
       }
     }

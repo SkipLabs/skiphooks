@@ -1,6 +1,6 @@
 import { summarize } from "./anthropic";
 import { getDigestConfig, getAuthToken, updateDigestLastRun } from "./db";
-import { fetchGroupPosts, formatPosts } from "./summary-utils";
+import { fetchGroupPosts, formatPosts, fmtTimestamp } from "./summary-utils";
 import { listOwnerRepos, fetchRepoActivity, formatRepoActivity } from "./github-utils";
 import { fetchSlashworkGroups } from "./slashwork-sync";
 import { postToSlashwork } from "./slashwork";
@@ -27,11 +27,10 @@ export function computeDigestWindow(now: Date = new Date()): { start: string; en
 
   const start = new Date(end.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-  const fmt = (d: Date) => d.toISOString().slice(0, 16).replace("T", " ");
   return {
     start: start.toISOString(),
     end: end.toISOString(),
-    label: `${fmt(start)} to ${fmt(end)} UTC`,
+    label: `${fmtTimestamp(start.toISOString())} to ${fmtTimestamp(end.toISOString())} UTC`,
   };
 }
 
