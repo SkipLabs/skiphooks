@@ -25,6 +25,13 @@ interface StreamEntry {
   subscribers: Set<(items: Map<string, unknown>, connected: boolean) => void>;
   items: Map<string, unknown>;
   connected: boolean;
+  reconnectAttempts: number;
+}
+
+const MAX_RECONNECT_DELAY_MS = 30000;
+
+function reconnectDelay(attempt: number): number {
+  return Math.min(1000 * 2 ** attempt, MAX_RECONNECT_DELAY_MS);
 }
 
 export function SkipStreamsProvider({ children }: { children: React.ReactNode }) {
@@ -69,45 +76,61 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  const connectStream = useCallback((name: StreamName, streamUrl: string, entry: StreamEntry) => {
-    const es = new EventSource(streamUrl);
-
-    es.addEventListener("init", (e) => {
-      const data = JSON.parse(e.data);
-      if (!Array.isArray(data.values)) return;
-      const map = new Map<string, unknown>();
-      for (const [key, vals] of data.values as [string, unknown[]][]) {
-        if (vals.length > 0) map.set(key, vals[0]!);
-      }
-      entry.items = map;
-      entry.connected = true;
-      entry.subscribers.forEach((cb) => cb(map, true));
-    });
-
-    es.addEventListener("update", (e) => {
-      const data = JSON.parse(e.data);
-      if (!Array.isArray(data.values)) return;
-      entry.items = applySkipUpdates(entry.items, data.values);
-      entry.subscribers.forEach((cb) => cb(entry.items, entry.connected));
-    });
-
-    es.onerror = () => {
-      entry.connected = false;
-      entry.subscribers.forEach((cb) => cb(entry.items, false));
-      es.close();
-      entry.eventSource = null;
-      // Reconnect if there are still subscribers
-      if (entry.subscribers.size > 0) {
-        setTimeout(() => {
-          if (entry.subscribers.size > 0) {
-            connectStream(name, streamUrl, entry);
-          }
-        }, 5000);
-      }
+  const connectStream = useCallback((name: StreamName, entry: StreamEntry) => {
+    const retry = () => {
+      if (entry.subscribers.size === 0) return;
+      const delay = reconnectDelay(entry.reconnectAttempts++);
+      setTimeout(() => {
+        if (entry.subscribers.size > 0) connectStream(name, entry);
+      }, delay);
     };
 
-    entry.eventSource = es;
-  }, []);
+    // Stream UUIDs are single-use — the proxy deletes them on disconnect — so
+    // each (re)connect must fetch a fresh URL rather than reuse a dead one.
+    ensureUrls()
+      .then((urls) => {
+        const url = urls[name];
+        if (!url || entry.subscribers.size === 0) return;
+
+        const es = new EventSource(url);
+
+        es.onopen = () => {
+          entry.reconnectAttempts = 0;
+        };
+
+        es.addEventListener("init", (e) => {
+          const data = JSON.parse(e.data);
+          if (!Array.isArray(data.values)) return;
+          const map = new Map<string, unknown>();
+          for (const [key, vals] of data.values as [string, unknown[]][]) {
+            if (vals.length > 0) map.set(key, vals[0]!);
+          }
+          entry.items = map;
+          entry.connected = true;
+          entry.subscribers.forEach((cb) => cb(map, true));
+        });
+
+        es.addEventListener("update", (e) => {
+          const data = JSON.parse(e.data);
+          if (!Array.isArray(data.values)) return;
+          entry.items = applySkipUpdates(entry.items, data.values);
+          entry.subscribers.forEach((cb) => cb(entry.items, entry.connected));
+        });
+
+        es.onerror = () => {
+          entry.connected = false;
+          entry.subscribers.forEach((cb) => cb(entry.items, false));
+          es.close();
+          entry.eventSource = null;
+          // The cached URL is now dead — invalidate so retry fetches a fresh one.
+          urlsRef.current = null;
+          retry();
+        };
+
+        entry.eventSource = es;
+      })
+      .catch(retry);
+  }, [ensureUrls]);
 
   const subscribe = useCallback(<T,>(
     name: StreamName,
@@ -116,6 +139,7 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
   ) => {
     let entry = streamsRef.current.get(name);
     const typedCallback = onUpdate as (items: Map<string, unknown>, connected: boolean) => void;
+    const isNew = !entry;
 
     if (!entry) {
       entry = {
@@ -123,24 +147,19 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
         subscribers: new Set(),
         items: initialData as Map<string, unknown>,
         connected: false,
+        reconnectAttempts: 0,
       };
       streamsRef.current.set(name, entry);
-
-      // Start connection
-      ensureUrls().then((urls) => {
-        const url = urls[name];
-        if (url && entry!.subscribers.size > 0) {
-          connectStream(name, url, entry!);
-        }
-      }).catch(() => {
-        // Will retry on next subscribe
-      });
     } else {
       // Send current state to new subscriber
       onUpdate(entry.items as Map<string, T>, entry.connected);
     }
 
     entry.subscribers.add(typedCallback);
+
+    // Connect only after the subscriber is registered, so connectStream's
+    // "no subscribers" guard doesn't bail on the very first subscribe.
+    if (isNew) connectStream(name, entry);
 
     return () => {
       entry!.subscribers.delete(typedCallback);
@@ -150,7 +169,7 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
         streamsRef.current.delete(name);
       }
     };
-  }, [ensureUrls, connectStream]);
+  }, [connectStream]);
 
   return (
     <SkipStreamsContext.Provider value={{ subscribe }}>
