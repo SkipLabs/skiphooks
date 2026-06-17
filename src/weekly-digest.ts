@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { summarize } from "./anthropic";
 import { getDigestConfig, getAuthToken, updateDigestLastRun } from "./db";
 import { fetchGroupPosts, formatPosts } from "./summary-utils";
 import { listOwnerRepos, fetchRepoActivity, formatRepoActivity } from "./github-utils";
@@ -60,8 +60,6 @@ export async function generateDigest(
 
   log("info", `Digest: fetching posts from ${activeGroups.length} groups and ${githubRepos.length} repos`);
 
-  const anthropic = new Anthropic({ apiKey });
-
   // Per-group summaries
   const groupResults = await mapWithConcurrency(
     activeGroups,
@@ -71,19 +69,10 @@ export async function generateDigest(
       if (posts.length === 0) return null;
 
       const formatted = formatPosts(posts);
-      const aiResponse = await anthropic.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: `Summarize the following messages from the "${group.name}" group. Be concise — 2-4 bullet points max:\n\n${formatted}`,
-          },
-        ],
-      });
-
-      const block = aiResponse.content[0];
-      const summary = block && block.type === "text" ? block.text : "";
+      const summary = await summarize(
+        `Summarize the following messages from the "${group.name}" group. Be concise — 2-4 bullet points max:\n\n${formatted}`,
+        1024,
+      );
       if (!summary) return null;
 
       log("info", `Digest: ${group.name} — ${posts.length} posts summarized`);
@@ -115,19 +104,10 @@ export async function generateDigest(
 
       if (!hasActivity) return null;
 
-      const aiResponse = await anthropic.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: `Summarize the following GitHub activity from "${gh.owner}/${gh.repo}". Highlight what shipped (merged PRs, releases), what is actively in review (open PRs), and any notable commits. Be concise — 2-4 bullet points max:\n\n${formatted}`,
-          },
-        ],
-      });
-
-      const block = aiResponse.content[0];
-      const summary = block && block.type === "text" ? block.text : "";
+      const summary = await summarize(
+        `Summarize the following GitHub activity from "${gh.owner}/${gh.repo}". Highlight what shipped (merged PRs, releases), what is actively in review (open PRs), and any notable commits. Be concise — 2-4 bullet points max:\n\n${formatted}`,
+        1024,
+      );
       if (!summary) return null;
 
       const postCount = activity.mergedPRs.length + activity.openedPRs.length + activity.releases.length + activity.commits.length;
@@ -158,19 +138,10 @@ export async function generateDigest(
   const metaPrompt = prompt ||
     "Create a unified weekly digest from the per-source summaries below. Sources include team discussions (Slashwork groups) and code activity (GitHub repositories). Structure it as: a brief overall overview paragraph, then key highlights organized by theme rather than by source, then any open questions or follow-ups from discussions. Use markdown formatting. Focus on what the team shipped and decided — do not invent action items from code activity.";
 
-  const metaResponse = await anthropic.messages.create({
-    model: "claude-haiku-4-5",
-    max_tokens: 2048,
-    messages: [
-      {
-        role: "user",
-        content: `${metaPrompt}\n\nPer-source summaries:\n\n${perSourceText}`,
-      },
-    ],
-  });
-
-  const metaBlock = metaResponse.content[0];
-  const markdown = metaBlock && metaBlock.type === "text" ? metaBlock.text : "";
+  const markdown = await summarize(
+    `${metaPrompt}\n\nPer-source summaries:\n\n${perSourceText}`,
+    2048,
+  );
   const totalPosts = groupSummaries.reduce((sum, g) => sum + g.postCount, 0);
 
   return { markdown, groupCount: groupSummaries.length, totalPosts, repoCount: repoSummaries.length };

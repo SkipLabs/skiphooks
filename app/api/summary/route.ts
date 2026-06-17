@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import { summarize } from "@/src/anthropic";
 import { getGroups, getAuthToken, getAuthTokens } from "@/src/db";
 import { fetchGroupPosts, formatPosts } from "@/src/summary-utils";
 import { fetchRepoActivity, formatRepoActivity } from "@/src/github-utils";
@@ -163,21 +163,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    const anthropic = new Anthropic({ apiKey });
     const source = [groupLabel, repo].filter(Boolean).join(" + ");
-    const aiResponse = await anthropic.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: 2048,
-      messages: [
-        {
-          role: "user",
-          content: `${body.prompt || "Summarize the following activity. Give a concise overview of what was shipped or completed, key discussions and decisions, and any open questions or follow-ups:"}\n\nSource: ${source} | ${label}\n\n${formatted}`,
-        },
-      ],
-    });
-
-    const summaryBlock = aiResponse.content[0] ?? { type: "text" as const, text: "" };
-    const summary = summaryBlock.type === "text" ? summaryBlock.text : "";
+    const summary = await summarize(
+      `${body.prompt || "Summarize the following activity. Give a concise overview of what was shipped or completed, key discussions and decisions, and any open questions or follow-ups:"}\n\nSource: ${source} | ${label}\n\n${formatted}`,
+      2048,
+    );
 
     return NextResponse.json({ summary, postCount, weekLabel: label });
   } catch (err) {
