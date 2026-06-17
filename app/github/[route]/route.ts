@@ -15,7 +15,7 @@ import { checkSuiteHandler } from "@/src/handlers/check-suite";
 
 export const dynamic = "force-dynamic";
 
-const handlers: Record<EventType, EventHandler> = {
+const handlers: Partial<Record<EventType, EventHandler>> = {
   pull_request: pullRequestHandler,
   issues: issuesHandler,
   issue_comment: issueCommentHandler,
