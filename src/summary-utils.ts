@@ -113,6 +113,11 @@ export async function fetchGroupPosts(
   const posts: PostNode[] = [];
   let cursor: string | null = null;
 
+  // Compare timestamps numerically — lexical string comparison only works if
+  // every value shares the exact same ISO format/precision/timezone.
+  const startMs = Date.parse(start);
+  const endMs = Date.parse(end);
+
   for (let page = 0; page < MAX_PAGES; page++) {
     const variables: Record<string, unknown> = { groupId, first: 100 };
     if (cursor) variables.after = cursor;
@@ -141,13 +146,14 @@ export async function fetchGroupPosts(
     if (nodes.length === 0) break;
 
     for (const post of nodes) {
-      if (post.created >= start && post.created <= end) {
+      const createdMs = Date.parse(post.created);
+      if (createdMs >= startMs && createdMs <= endMs) {
         posts.push(post);
       }
     }
 
-    const oldestInPage = nodes[nodes.length - 1]!.created;
-    if (oldestInPage < start) break;
+    const oldestInPage = Date.parse(nodes[nodes.length - 1]!.created);
+    if (oldestInPage < startMs) break;
 
     if (!postsData?.pageInfo?.hasNextPage) break;
     cursor = postsData?.pageInfo?.endCursor ?? null;

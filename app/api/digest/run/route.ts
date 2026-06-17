@@ -32,10 +32,22 @@ export async function POST(request: Request) {
     return apiError("Failed to load auth token", "AUTH_TOKEN_ERROR", 500);
   }
 
-  // Use provided window or default to last Thursday-Thursday
-  const window = body.start && body.end
-    ? { start: body.start, end: body.end, label: `${body.start} to ${body.end}` }
-    : computeDigestWindow();
+  // Use provided window or default to last Thursday-Thursday. Normalize any
+  // caller-supplied bounds to full ISO timestamps so downstream date math is
+  // consistent (e.g. a bare "2026-06-01" becomes a real instant).
+  let window: { start: string; end: string; label: string };
+  if (body.start && body.end) {
+    const startDate = new Date(body.start);
+    const endDate = new Date(body.end);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return apiError("start and end must be valid dates", "INVALID_WINDOW", 400);
+    }
+    const start = startDate.toISOString();
+    const end = endDate.toISOString();
+    window = { start, end, label: `${start} to ${end}` };
+  } else {
+    window = computeDigestWindow();
+  }
 
   try {
     const result = await generateDigest(
