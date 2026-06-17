@@ -42,42 +42,48 @@ export function startCalendarPoller(
     const now = new Date();
     const timeMax = new Date(now.getTime() + reminderLeadTimeMs);
 
-    for (const user of calendarConfig.users) {
+    // Poll every user's calendar concurrently — they share one access token
+    // and write to disjoint dedup keys (keyed by calendarId), so there's no
+    // cross-user contention. Sequential polling made latency scale with the
+    // number of users.
+    await Promise.allSettled(
+      calendarConfig.users.map((user) => pollUser(user, accessToken, now, timeMax)),
+    );
+  }
+
+  async function pollUser(
+    user: CalendarConfig["users"][number],
+    accessToken: string,
+    now: Date,
+    timeMax: Date,
+  ): Promise<void> {
+    let events;
+    try {
+      events = await fetchUpcomingEvents(accessToken, user.calendarId, now, timeMax);
+    } catch (err) {
+      log("error", `Failed to fetch calendar for ${user.name}: ${err}`);
+      return;
+    }
+
+    for (const event of events) {
+      if (isCancelledEvent(event)) continue;
+      if (isAllDayEvent(event)) continue;
+
+      const startTime = event.start.dateTime!;
+      const key = eventKey(user.calendarId, event.id, startTime);
+      if (remindedKeys.has(key)) continue;
+
+      const minutesUntilStart =
+        (new Date(startTime).getTime() - now.getTime()) / 60_000;
+
+      const { markdown } = formatCalendarReminder(event, user.name, minutesUntilStart);
+
       try {
-        const events = await fetchUpcomingEvents(
-          accessToken,
-          user.calendarId,
-          now,
-          timeMax,
-        );
-
-        for (const event of events) {
-          if (isCancelledEvent(event)) continue;
-          if (isAllDayEvent(event)) continue;
-
-          const startTime = event.start.dateTime!;
-          const key = eventKey(user.calendarId, event.id, startTime);
-          if (remindedKeys.has(key)) continue;
-
-          const minutesUntilStart =
-            (new Date(startTime).getTime() - now.getTime()) / 60_000;
-
-          const { markdown } = formatCalendarReminder(
-            event,
-            user.name,
-            minutesUntilStart,
-          );
-
-          try {
-            await postToSlashwork(connection, user.targetId, markdown);
-            remindedKeys.add(key);
-            log("info", `Calendar reminder for ${user.name}: "${event.summary}"`);
-          } catch (err) {
-            log("error", `Failed to post calendar reminder for ${user.name}: ${err}`);
-          }
-        }
+        await postToSlashwork(connection, user.targetId, markdown);
+        remindedKeys.add(key);
+        log("info", `Calendar reminder for ${user.name}: "${event.summary}"`);
       } catch (err) {
-        log("error", `Failed to fetch calendar for ${user.name}: ${err}`);
+        log("error", `Failed to post calendar reminder for ${user.name}: ${err}`);
       }
     }
   }
