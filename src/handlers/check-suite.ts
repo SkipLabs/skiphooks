@@ -1,4 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { relevantActionMatcher } from "./utils";
 
 const conclusionEmojis: Record<string, string> = {
   success: "✅",
@@ -9,8 +10,6 @@ const conclusionEmojis: Record<string, string> = {
   action_required: "⚠️",
   stale: "⚫",
 };
-
-const relevantActions = new Set(["completed"]);
 
 interface CheckSuitePayload {
   action: string;
@@ -28,9 +27,7 @@ interface CheckSuitePayload {
 }
 
 export const checkSuiteHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher("completed"),
 
   format(payload): FormattedEvent {
     const { check_suite: suite, repository } = payload as CheckSuitePayload;

@@ -1,12 +1,11 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { blockquoteExcerpt, relevantActionMatcher } from "./utils";
 
 const actionEmojis: Record<string, string> = {
   published: "🚀",
   created: "🆕",
   edited: "✏️",
 };
-
-const relevantActions = new Set(["published", "created", "edited"]);
 
 interface ReleasePayload {
   action: string;
@@ -25,9 +24,7 @@ interface ReleasePayload {
 }
 
 export const releaseHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher("published", "created", "edited"),
 
   format(payload): FormattedEvent {
     const { action, release, repository } = payload as ReleasePayload;
@@ -54,11 +51,7 @@ export const releaseHandler: EventHandler = {
     }
 
     if (release.body) {
-      const excerpt =
-        release.body.length > 300
-          ? release.body.slice(0, 300) + "…"
-          : release.body;
-      lines.push("", `> ${excerpt.replace(/\n/g, "\n> ")}`);
+      lines.push("", blockquoteExcerpt(release.body, 300));
     }
 
     return { markdown: lines.join("\n") };

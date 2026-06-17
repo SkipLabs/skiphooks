@@ -1,4 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { blockquoteExcerpt, relevantActionMatcher } from "./utils";
 
 const actionEmojis: Record<string, string> = {
   opened: "🟢",
@@ -7,14 +8,6 @@ const actionEmojis: Record<string, string> = {
   labeled: "🏷️",
   assigned: "👤",
 };
-
-const relevantActions = new Set([
-  "opened",
-  "closed",
-  "reopened",
-  "labeled",
-  "assigned",
-]);
 
 interface IssuePayload {
   action: string;
@@ -35,9 +28,13 @@ interface IssuePayload {
 }
 
 export const issuesHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher(
+    "opened",
+    "closed",
+    "reopened",
+    "labeled",
+    "assigned",
+  ),
 
   format(payload): FormattedEvent {
     const { action, issue, repository, label, assignee } =
@@ -63,9 +60,7 @@ export const issuesHandler: EventHandler = {
     }
 
     if (issue.body) {
-      const excerpt =
-        issue.body.length > 200 ? issue.body.slice(0, 200) + "…" : issue.body;
-      lines.push("", `> ${excerpt.replace(/\n/g, "\n> ")}`);
+      lines.push("", blockquoteExcerpt(issue.body, 200));
     }
 
     return { markdown: lines.join("\n") };

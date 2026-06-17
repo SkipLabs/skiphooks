@@ -1,4 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { blockquoteExcerpt, relevantActionMatcher } from "./utils";
 
 const stateEmojis: Record<string, string> = {
   approved: "✅",
@@ -6,8 +7,6 @@ const stateEmojis: Record<string, string> = {
   commented: "💬",
   dismissed: "⚫",
 };
-
-const relevantActions = new Set(["submitted"]);
 
 interface PRReviewPayload {
   action: string;
@@ -28,9 +27,7 @@ interface PRReviewPayload {
 }
 
 export const pullRequestReviewHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher("submitted"),
 
   format(payload): FormattedEvent {
     const { review, pull_request: pr, repository } = payload as PRReviewPayload;
@@ -48,8 +45,7 @@ export const pullRequestReviewHandler: EventHandler = {
     ];
 
     if (review.body) {
-      const excerpt = review.body.length > 200 ? review.body.slice(0, 200) + "..." : review.body;
-      lines.push("", `> ${excerpt.replace(/\n/g, "\n> ")}`);
+      lines.push("", blockquoteExcerpt(review.body, 200));
     }
 
     return { markdown: lines.join("\n") };

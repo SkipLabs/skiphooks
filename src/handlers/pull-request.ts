@@ -1,4 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { blockquoteExcerpt, relevantActionMatcher } from "./utils";
 
 const actionEmojis: Record<string, string> = {
   opened: "🟢",
@@ -8,14 +9,6 @@ const actionEmojis: Record<string, string> = {
   ready_for_review: "🟢",
   synchronize: "🔄",
 };
-
-const relevantActions = new Set([
-  "opened",
-  "closed",
-  "review_requested",
-  "ready_for_review",
-  "synchronize",
-]);
 
 interface PRPayload {
   action: string;
@@ -35,9 +28,13 @@ interface PRPayload {
 }
 
 export const pullRequestHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher(
+    "opened",
+    "closed",
+    "review_requested",
+    "ready_for_review",
+    "synchronize",
+  ),
 
   format(payload): FormattedEvent {
     const { action, pull_request: pr, repository } = payload as PRPayload;
@@ -58,9 +55,7 @@ export const pullRequestHandler: EventHandler = {
     ];
 
     if (pr.body) {
-      const excerpt =
-        pr.body.length > 200 ? pr.body.slice(0, 200) + "…" : pr.body;
-      lines.push("", `> ${excerpt.replace(/\n/g, "\n> ")}`);
+      lines.push("", blockquoteExcerpt(pr.body, 200));
     }
 
     return { markdown: lines.join("\n") };

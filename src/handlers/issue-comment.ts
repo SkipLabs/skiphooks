@@ -1,6 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
-
-const relevantActions = new Set(["created"]);
+import { blockquoteExcerpt, relevantActionMatcher } from "./utils";
 
 interface IssueCommentPayload {
   action: string;
@@ -21,9 +20,7 @@ interface IssueCommentPayload {
 }
 
 export const issueCommentHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher("created"),
 
   format(payload): FormattedEvent {
     const { comment, issue, repository } = payload as IssueCommentPayload;
@@ -39,11 +36,7 @@ export const issueCommentHandler: EventHandler = {
     ];
 
     if (comment.body) {
-      const excerpt =
-        comment.body.length > 200
-          ? comment.body.slice(0, 200) + "…"
-          : comment.body;
-      lines.push("", `> ${excerpt.replace(/\n/g, "\n> ")}`);
+      lines.push("", blockquoteExcerpt(comment.body, 200));
     }
 
     return { markdown: lines.join("\n") };

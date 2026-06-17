@@ -1,4 +1,5 @@
 import type { EventHandler, FormattedEvent } from "./types";
+import { relevantActionMatcher } from "./utils";
 
 const statusEmojis: Record<string, string> = {
   completed: "✅",
@@ -9,8 +10,6 @@ const statusEmojis: Record<string, string> = {
   in_progress: "🔄",
   queued: "🕐",
 };
-
-const relevantActions = new Set(["completed"]);
 
 interface WorkflowRunPayload {
   action: string;
@@ -32,9 +31,7 @@ interface WorkflowRunPayload {
 }
 
 export const workflowRunHandler: EventHandler = {
-  isRelevantAction(action) {
-    return action != null && relevantActions.has(action);
-  },
+  isRelevantAction: relevantActionMatcher("completed"),
 
   format(payload): FormattedEvent {
     const { workflow_run: run, repository } = payload as WorkflowRunPayload;
