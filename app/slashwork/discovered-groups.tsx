@@ -3,7 +3,7 @@ interface SlashworkGroup {
   name: string;
 }
 
-export default function DiscoveredGroupsLive({
+export default function DiscoveredGroups({
   groups,
   configuredGroupIds,
 }: {

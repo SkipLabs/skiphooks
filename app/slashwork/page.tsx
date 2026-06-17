@@ -5,7 +5,7 @@ import { SkipStreamsProvider } from "@/src/skip/skip-streams-provider";
 import AuthTokensLive from "./auth-tokens-live";
 import GroupsLive from "./groups-live";
 import RoutesLive from "./routes-live";
-import DiscoveredGroupsLive from "./discovered-groups-live";
+import DiscoveredGroups from "./discovered-groups";
 import "./slashwork.css";
 
 const AdminActions = nextDynamic(() => import("./admin-actions"));
@@ -109,7 +109,7 @@ function CalendarSection({ calendarUsers }: Pick<PageData, "calendarUsers">) {
 
 function SlashworkGroupsSection({ slashworkGroups, groups }: Pick<PageData, "slashworkGroups" | "groups">) {
   return (
-    <DiscoveredGroupsLive
+    <DiscoveredGroups
       groups={slashworkGroups}
       configuredGroupIds={groups.map((g) => g.slashworkId)}
     />

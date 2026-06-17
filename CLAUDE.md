@@ -95,12 +95,12 @@ Google Calendar polling that posts event reminders. Config from DB (`calendar_us
 The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip runs as a sidecar process on boot (started in `instrumentation.ts`) that watches PostgreSQL tables and streams changes to the browser via Server-Sent Events.
 
 **Architecture:**
-- `src/skip/service.ts` — defines the `SkipService` with four reactive collections (`authTokens`, `groups`, `routes`, `discoveredGroups`) backed by `@skip-adapter/postgres`
-- `src/skip/postgres-adapter.ts` — `PostgresExternalService` connects to PostgreSQL and monitors the four tables via triggers
+- `src/skip/service.ts` — defines the `SkipService` with three reactive collections (`authTokens`, `groups`, `routes`) backed by `@skip-adapter/postgres`
+- `src/skip/postgres-adapter.ts` — `PostgresExternalService` connects to PostgreSQL and monitors the three tables via triggers
 - `src/skip/broker.ts` — `SkipServiceBroker` singleton used by API routes to get stream URLs from the Skip control port
 - `src/skip/parse-stream.ts` — applies incremental Skip SSE updates to a local `Map`
 - `src/skip/skip-streams-provider.tsx` — React context that manages shared `EventSource` connections (one per stream name, shared across subscribers)
-- `app/api/skip/*` — proxy routes that call the Skip broker to get stream URLs, then forward SSE from the Skip streaming port to the browser. `/api/skip/batch` returns all four URLs at once.
+- `app/api/skip/*` — proxy routes that call the Skip broker to get stream URLs, then forward SSE from the Skip streaming port to the browser. `/api/skip/batch` returns all three URLs at once.
 
 **Startup:** `instrumentation.ts` calls `cleanupOrphanSkipTriggers()` (drops leftover pg triggers from a prior run), then `runService(skipService, { streaming_port, control_port })`, then starts a watchdog that exits the process after 5 consecutive health-check failures (triggering a platform restart).
 
