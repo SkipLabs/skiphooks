@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { applySkipUpdates } from "./parse-stream";
+import { reconnectDelay } from "./backoff";
 
 type StreamName = "authTokens" | "groups" | "routes";
 
@@ -26,12 +27,6 @@ interface StreamEntry {
   items: Map<string, unknown>;
   connected: boolean;
   reconnectAttempts: number;
-}
-
-const MAX_RECONNECT_DELAY_MS = 30000;
-
-function reconnectDelay(attempt: number): number {
-  return Math.min(1000 * 2 ** attempt, MAX_RECONNECT_DELAY_MS);
 }
 
 export function SkipStreamsProvider({ children }: { children: React.ReactNode }) {
