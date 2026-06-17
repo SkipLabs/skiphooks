@@ -31,13 +31,18 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
   const streamsRef = useRef<Map<StreamName, StreamEntry>>(new Map());
   const urlsRef = useRef<Record<string, string> | null>(null);
   const fetchingRef = useRef(false);
-  const pendingRef = useRef<Array<() => void>>([]);
+  const pendingRef = useRef<
+    Array<{
+      resolve: (urls: Record<string, string>) => void;
+      reject: (err: Error) => void;
+    }>
+  >([]);
 
   const ensureUrls = useCallback(async () => {
     if (urlsRef.current) return urlsRef.current;
     if (fetchingRef.current) {
-      return new Promise<Record<string, string>>((resolve) => {
-        pendingRef.current.push(() => resolve(urlsRef.current!));
+      return new Promise<Record<string, string>>((resolve, reject) => {
+        pendingRef.current.push({ resolve, reject });
       });
     }
 
@@ -47,12 +52,20 @@ export function SkipStreamsProvider({ children }: { children: React.ReactNode })
       if (!res.ok) throw new Error("Failed to fetch stream URLs");
       const { streams } = await res.json();
       urlsRef.current = streams;
-      pendingRef.current.forEach((cb) => cb());
+      const waiters = pendingRef.current;
       pendingRef.current = [];
+      waiters.forEach((w) => w.resolve(streams));
       return streams as Record<string, string>;
-    } catch {
+    } catch (err) {
+      // Reject every queued waiter — otherwise subscribers that arrived
+      // while this fetch was in flight hang forever on an unsettled promise.
+      const error = err instanceof Error ? err : new Error("Failed to fetch stream URLs");
+      const waiters = pendingRef.current;
+      pendingRef.current = [];
+      waiters.forEach((w) => w.reject(error));
+      throw error;
+    } finally {
       fetchingRef.current = false;
-      throw new Error("Failed to fetch stream URLs");
     }
   }, []);
 
