@@ -1,4 +1,4 @@
-import { loadAppConfig, type EventType, type AppConfig } from "@/src/config";
+import { getAppConfig, type EventType } from "@/src/config";
 import { resolveRouteFromDb } from "@/src/db";
 import { verifySignature } from "@/src/webhook";
 import { postToSlashwork, type SlashworkConnection } from "@/src/slashwork";
@@ -14,12 +14,6 @@ import { pullRequestReviewHandler } from "@/src/handlers/pull-request-review";
 import { checkSuiteHandler } from "@/src/handlers/check-suite";
 
 export const dynamic = "force-dynamic";
-
-let _config: AppConfig | null = null;
-function getConfig() {
-  if (!_config) _config = loadAppConfig();
-  return _config;
-}
 
 const handlers: Record<EventType, EventHandler> = {
   pull_request: pullRequestHandler,
@@ -41,7 +35,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ route: string }> },
 ) {
-  const config = getConfig();
+  const config = getAppConfig();
 
   // Read body immediately — the stream gets locked if we await other async work first
   let body: string;

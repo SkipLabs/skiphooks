@@ -40,3 +40,11 @@ export function loadAppConfig(): AppConfig {
     slashwork: { graphqlUrl },
   };
 }
+
+let cachedConfig: AppConfig | null = null;
+
+/** Memoized accessor — loads and validates the config once per process. */
+export function getAppConfig(): AppConfig {
+  if (!cachedConfig) cachedConfig = loadAppConfig();
+  return cachedConfig;
+}
