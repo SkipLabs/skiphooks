@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSkipStream } from "@/src/skip/skip-streams-provider";
 import { DeleteButton } from "./admin-actions";
 
@@ -25,8 +26,12 @@ export default function AuthTokensLive({
 }: {
   initialTokens: AuthToken[];
 }) {
-  const initialMap = new Map(
-    initialTokens.map((t) => [t.name, { name: t.name, token: "" } as DbAuthToken]),
+  const initialMap = useMemo(
+    () =>
+      new Map(
+        initialTokens.map((t) => [t.name, { name: t.name, token: "" } as DbAuthToken]),
+      ),
+    [initialTokens],
   );
   const { items, connected } = useSkipStream<DbAuthToken>(
     "authTokens",

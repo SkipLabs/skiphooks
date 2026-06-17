@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSkipStream } from "@/src/skip/skip-streams-provider";
 import { DeleteButton } from "./admin-actions";
 
@@ -31,13 +32,17 @@ export default function RoutesLive({
 }: {
   initialRoutes: Route[];
 }) {
-  const initialMap = new Map(
-    initialRoutes.map((r) => [r.name, {
-      name: r.name,
-      group_name: r.groupName,
-      stream_id: r.streamId,
-      auth_token: r.authToken,
-    } as DbRoute]),
+  const initialMap = useMemo(
+    () =>
+      new Map(
+        initialRoutes.map((r) => [r.name, {
+          name: r.name,
+          group_name: r.groupName,
+          stream_id: r.streamId,
+          auth_token: r.authToken,
+        } as DbRoute]),
+      ),
+    [initialRoutes],
   );
   const { items, connected } = useSkipStream<DbRoute>(
     "routes",

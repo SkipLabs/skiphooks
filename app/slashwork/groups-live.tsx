@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { useSkipStream } from "@/src/skip/skip-streams-provider";
 
 interface DbGroup {
@@ -27,12 +28,16 @@ export default function GroupsLive({
 }: {
   initialGroups: Group[];
 }) {
-  const initialMap = new Map(
-    initialGroups.map((g) => [g.name, {
-      name: g.name,
-      slashwork_id: g.slashworkId,
-      auth_token: g.authToken,
-    } as DbGroup]),
+  const initialMap = useMemo(
+    () =>
+      new Map(
+        initialGroups.map((g) => [g.name, {
+          name: g.name,
+          slashwork_id: g.slashworkId,
+          auth_token: g.authToken,
+        } as DbGroup]),
+      ),
+    [initialGroups],
   );
   const { items, connected } = useSkipStream<DbGroup>(
     "groups",
