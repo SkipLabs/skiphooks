@@ -75,6 +75,7 @@ export async function POST(request: Request) {
   const sections: string[] = [];
   let postCount = 0;
   let groupLabel = "";
+  let hasContent = false;
 
   // Fetch Slashwork posts if a group was specified
   if (hasGroup) {
@@ -117,6 +118,7 @@ export async function POST(request: Request) {
     postCount = weekPosts.length;
     if (weekPosts.length > 0) {
       sections.push(`=== Slashwork: ${groupLabel} ===\n\n${formatPosts(weekPosts)}`);
+      hasContent = true;
     }
   }
 
@@ -130,13 +132,21 @@ export async function POST(request: Request) {
     try {
       const activity = await fetchRepoActivity(owner, repoName, start, end, process.env.GITHUB_TOKEN);
       sections.push(formatRepoActivity(owner, repoName, activity));
+      if (
+        activity.mergedPRs.length > 0 ||
+        activity.openedPRs.length > 0 ||
+        activity.releases.length > 0 ||
+        activity.commits.length > 0
+      ) {
+        hasContent = true;
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return apiError(`GitHub fetch failed: ${message}`, "GITHUB_FETCH_FAILED", 502);
     }
   }
 
-  if (sections.length === 0 || sections.every((s) => s.includes("No activity"))) {
+  if (!hasContent) {
     const source = [groupLabel, repo].filter(Boolean).join(" + ");
     return NextResponse.json({
       summary: `No activity found in '${source}' for ${label}.`,
