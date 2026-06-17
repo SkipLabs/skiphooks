@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "./retry";
+
 export const FETCH_POSTS_QUERY = `
   query FetchGroupPosts($groupId: ID!, $first: Int!, $after: String) {
     fetch__Group(id: $groupId) {
@@ -115,7 +117,7 @@ export async function fetchGroupPosts(
     const variables: Record<string, unknown> = { groupId, first: 100 };
     if (cursor) variables.after = cursor;
 
-    const response = await fetch(graphqlUrl, {
+    const response = await fetchWithRetry(graphqlUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

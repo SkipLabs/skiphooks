@@ -1,4 +1,5 @@
 import type { SlashworkConnection } from "./slashwork";
+import { fetchWithRetry } from "./retry";
 
 const FETCH_GROUPS_QUERY = `
   query FetchGroups {
@@ -25,7 +26,7 @@ interface FetchGroupsResponse {
 export async function fetchSlashworkGroups(
   connection: SlashworkConnection,
 ): Promise<Array<{ slashworkId: string; name: string }>> {
-  const response = await fetch(connection.graphqlUrl, {
+  const response = await fetchWithRetry(connection.graphqlUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
