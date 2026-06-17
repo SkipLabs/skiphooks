@@ -15,8 +15,10 @@ export async function fetchWithRetry(
         return response;
       }
 
-      // Retryable status code — clone the error info before retrying
+      // Retryable status code — discard this response's body before retrying
+      // so the connection can be reused instead of leaked.
       if (attempt < maxRetries) {
+        await response.body?.cancel();
         const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
         await new Promise((resolve) => setTimeout(resolve, delay));
         continue;
