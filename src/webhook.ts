@@ -9,7 +9,14 @@ export function verifySignature(
 
   const digest = `sha256=${createHmac("sha256", secret).update(payload).digest("hex")}`;
 
-  if (digest.length !== signature.length) return false;
+  const digestBuf = Buffer.from(digest);
+  const signatureBuf = Buffer.from(signature);
 
-  return timingSafeEqual(Buffer.from(digest), Buffer.from(signature));
+  // timingSafeEqual throws on unequal-length buffers, so compare byte
+  // lengths first. A crafted signature with a multibyte char can share the
+  // string length of the digest while differing in byte length — guard on
+  // bytes, not string length, to avoid a 500 on malformed input.
+  if (digestBuf.length !== signatureBuf.length) return false;
+
+  return timingSafeEqual(digestBuf, signatureBuf);
 }

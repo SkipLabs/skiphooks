@@ -28,3 +28,13 @@ test("verifySignature: tampered payload returns false", () => {
   const signature = sign('{"action":"opened"}', SECRET);
   expect(verifySignature('{"action":"closed"}', signature, SECRET)).toBe(false);
 });
+
+test("verifySignature: multibyte signature of equal string length returns false (no throw)", () => {
+  const payload = '{"action":"opened"}';
+  const digest = sign(payload, SECRET);
+  // Replace the last char with a multibyte one: same string length, more bytes.
+  const crafted = digest.slice(0, -1) + "é";
+  expect(crafted.length).toBe(digest.length);
+  expect(() => verifySignature(payload, crafted, SECRET)).not.toThrow();
+  expect(verifySignature(payload, crafted, SECRET)).toBe(false);
+});
