@@ -53,6 +53,15 @@ export async function POST(
 
   const { route: routeName } = await params;
 
+  // Verify the signature before any DB work — verification is pure CPU and
+  // needs only the body + secret, so forged requests are rejected without
+  // touching the database (avoids an unauthenticated DB-load vector).
+  const signature = request.headers.get("x-hub-signature-256");
+  if (!verifySignature(body, signature, config.github.webhookSecret)) {
+    log("warn", `Invalid webhook signature for route "${routeName}" (signature: ${signature ? `"${signature.slice(0, 20)}..."` : "missing"}, body length: ${body.length})`);
+    return new Response("Invalid signature", { status: 401 });
+  }
+
   const resolved = await resolveRouteFromDb(routeName);
   if (!resolved) {
     log("warn", `No route configured for: ${routeName}`);
@@ -64,12 +73,6 @@ export async function POST(
     graphqlUrl: config.slashwork.graphqlUrl,
     authToken,
   };
-
-  const signature = request.headers.get("x-hub-signature-256");
-  if (!verifySignature(body, signature, config.github.webhookSecret)) {
-    log("warn", `Invalid webhook signature for route "${routeName}" (signature: ${signature ? `"${signature.slice(0, 20)}..."` : "missing"}, body length: ${body.length})`);
-    return new Response("Invalid signature", { status: 401 });
-  }
 
   const eventType = request.headers.get("x-github-event") as EventType | null;
   if (!eventType) {
