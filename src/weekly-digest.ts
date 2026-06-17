@@ -4,8 +4,12 @@ import { fetchGroupPosts, formatPosts } from "./summary-utils";
 import { listOwnerRepos, fetchRepoActivity, formatRepoActivity } from "./github-utils";
 import { fetchSlashworkGroups } from "./slashwork-sync";
 import { postToSlashwork } from "./slashwork";
+import { mapWithConcurrency } from "./concurrency";
 
 type LogFn = (level: string, message: string) => void;
+
+// Cap simultaneous Anthropic calls so large orgs don't fan out into rate limits.
+const DIGEST_SUMMARY_CONCURRENCY = 5;
 
 export function computeDigestWindow(now: Date = new Date()): { start: string; end: string; label: string } {
   // Find this Thursday 14:00 UTC
@@ -59,8 +63,10 @@ export async function generateDigest(
   const anthropic = new Anthropic({ apiKey });
 
   // Per-group summaries
-  const groupResults = await Promise.allSettled(
-    activeGroups.map(async (group) => {
+  const groupResults = await mapWithConcurrency(
+    activeGroups,
+    DIGEST_SUMMARY_CONCURRENCY,
+    async (group) => {
       const posts = await fetchGroupPosts(graphqlUrl, authToken, group.slashworkId, startDate, endDate);
       if (posts.length === 0) return null;
 
@@ -82,7 +88,7 @@ export async function generateDigest(
 
       log("info", `Digest: ${group.name} — ${posts.length} posts summarized`);
       return { label: `Group: ${group.name}`, summary, postCount: posts.length };
-    }),
+    },
   );
 
   const groupSummaries = groupResults.flatMap((r, i) => {
@@ -94,8 +100,10 @@ export async function generateDigest(
   });
 
   // Per-repo summaries
-  const repoResults = await Promise.allSettled(
-    githubRepos.map(async (gh) => {
+  const repoResults = await mapWithConcurrency(
+    githubRepos,
+    DIGEST_SUMMARY_CONCURRENCY,
+    async (gh) => {
       const activity = await fetchRepoActivity(gh.owner, gh.repo, startDate, endDate, githubToken);
       const formatted = formatRepoActivity(gh.owner, gh.repo, activity);
 
@@ -125,7 +133,7 @@ export async function generateDigest(
       const postCount = activity.mergedPRs.length + activity.openedPRs.length + activity.releases.length + activity.commits.length;
       log("info", `Digest: ${gh.owner}/${gh.repo} — ${postCount} events summarized`);
       return { label: `Repo: ${gh.owner}/${gh.repo}`, summary, postCount };
-    }),
+    },
   );
 
   const repoSummaries = repoResults.flatMap((r, i) => {
