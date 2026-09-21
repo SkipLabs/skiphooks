@@ -22,15 +22,15 @@
     "@skipruntime/helpers": "0.0.19",
     "@skipruntime/server": "0.0.19",
     "@skipruntime/wasm": "0.0.19",
-    "@types/node": "^22",
-    "@types/pg": "^8.18.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/node": "^24.13.6",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "next": "15.5.25",
-    "pg": "^8.20.0",
-    "react": "^19",
-    "react-dom": "^19",
-    "typescript": "^5"
+    "pg": "^8.23.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@types/bun": "latest"
