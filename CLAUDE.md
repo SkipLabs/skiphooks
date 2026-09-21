@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-Skiphooks is a Next.js 15 full-stack app that:
+Skiphooks is a Next.js 16 full-stack app that:
 1. Receives GitHub webhooks and forwards them to Slashwork groups via GraphQL
 2. Provides AI-powered weekly summaries and cross-group digests (Anthropic Claude)
 3. Auto-discovers Slashwork groups and syncs them to a local DB
@@ -16,11 +16,9 @@ Skiphooks is a Next.js 15 full-stack app that:
 bun install                             # Install dependencies
 bun run dev                             # Next.js dev server
 bun run build                           # Production build
-bun test                                # Run all tests
-bun test --filter "handler"             # Match test file name
+bun run test                            # Run all tests (scripts/test.sh, one process per file)
 bun test src/calendar/calendar.test.ts  # Run single file
 bunx tsc --noEmit                       # Type-check without emitting
-./test-webhook.sh skipper               # Send test webhook to a route
 ./summarize-group.sh skjs week10        # CLI: summarize a group's week
 ```
 
@@ -35,7 +33,7 @@ Default to Bun for everything. Bun auto-loads `.env` — don't use dotenv.
 
 ### Next.js App (`app/`)
 
-Pages and API routes live in `app/`. Clerk auth protects all pages except webhooks and health check.
+Pages and API routes live in `app/`. Clerk auth (`proxy.ts`, the Next 16 name for middleware) protects all pages except webhooks and health check.
 
 **Pages:**
 - `/slashwork` — Database state viewer (auth tokens, groups, routes, discovered groups, digest status)
@@ -53,7 +51,7 @@ Pages and API routes live in `app/`. Clerk auth protects all pages except webhoo
 
 ### Database (`src/db.ts` + `migrations/`)
 
-PostgreSQL via `pg` library. Connection string: `POSTGRESQL_ADDON_URI`. Migrations run automatically on startup via `instrumentation.ts`.
+PostgreSQL via `pg` library. Connection string: `POSTGRESQL_ADDON_URI`. Migrations run automatically on startup via `src/instrumentation-node.ts`.
 
 **Tables:** `auth_tokens`, `groups`, `routes`, `slashwork_groups` (discovered), `weekly_digest_config`, `calendar_users`, plus Scout tables.
 
@@ -79,7 +77,7 @@ Shared utilities for fetching and formatting Slashwork posts:
 - `generateDigest()` — per-group summaries via Haiku, then meta-summary
 - `computeDigestWindow()` — Thursday 2pm UTC → next Thursday 2pm UTC
 
-### Pollers (`instrumentation.ts`)
+### Pollers (`src/instrumentation-node.ts`)
 
 Three background tasks started on app boot:
 1. **Route validation** — validates all Slashwork auth tokens
@@ -92,7 +90,7 @@ Google Calendar polling that posts event reminders. Config from DB (`calendar_us
 
 ### Skip Reactive Streams (`src/skip/`)
 
-The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip runs as a sidecar process on boot (started in `instrumentation.ts`) that watches PostgreSQL tables and streams changes to the browser via Server-Sent Events.
+The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip runs as a sidecar process on boot (started in `src/instrumentation-node.ts`) that watches PostgreSQL tables and streams changes to the browser via Server-Sent Events.
 
 **Architecture:**
 - `src/skip/service.ts` — defines the `SkipService` with three reactive collections (`authTokens`, `groups`, `routes`) backed by `@skip-adapter/postgres`
@@ -102,7 +100,7 @@ The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip 
 - `src/skip/skip-streams-provider.tsx` — React context that manages shared `EventSource` connections (one per stream name, shared across subscribers)
 - `app/api/skip/*` — proxy routes that call the Skip broker to get stream URLs, then forward SSE from the Skip streaming port to the browser. `/api/skip/batch` returns all three URLs at once.
 
-**Startup:** `instrumentation.ts` calls `cleanupOrphanSkipTriggers()` (drops leftover pg triggers from a prior run), then `runService(skipService, { streaming_port, control_port })`, then starts a watchdog that exits the process after 5 consecutive health-check failures (triggering a platform restart).
+**Startup:** `instrumentation.ts` only dispatches to `src/instrumentation-node.ts` when `NEXT_RUNTIME` is `nodejs` (so the Edge bundle never imports pg/Skip/express). That module calls `cleanupOrphanSkipTriggers()` (drops leftover pg triggers from a prior run), then `runService(skipService, { streaming_port, control_port })`, then starts a watchdog that exits the process after 5 consecutive health-check failures (triggering a platform restart).
 
 **Ports:** `SKIP_STREAMING_PORT` (default 8079) for SSE, `SKIP_CONTROL_PORT` (default 8078) for broker/healthz.
 
@@ -123,11 +121,12 @@ The `/slashwork` admin page uses Skip Runtime for real-time reactive data. Skip 
 
 ## Tests
 
-Unit test files live next to source. E2e tests live in `tests/e2e/`. Pattern: `import { test, expect, describe } from "bun:test"`.
+Unit test files live next to source. Pattern: `import { test, expect, describe } from "bun:test"`.
+
+`bun run test` runs `scripts/test.sh`, which starts one Bun process per test file: Bun's `mock.module` is process-wide, so files that mock the same module interfere when run in a single process. The pre-commit hook (`bun run install-hooks`) runs tests, typecheck and build.
 
 ```sh
-bun test                              # All tests
-bun test --filter "handler"           # Match test file name
+bun run test                            # All tests
 bun test src/calendar/calendar.test.ts  # Run single file
 ```
 
@@ -140,7 +139,7 @@ See `.env.example`. Key vars:
 - `ANTHROPIC_API_KEY` — for AI summaries and digests (uses `claude-haiku-4-5`)
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` — Clerk auth
 - `GOOGLE_SERVICE_ACCOUNT_KEY` — calendar feature (optional)
-- `PORT` — server port (default 3000)
+- `PORT` — server port (default 8080)
 - `SKIP_STREAMING_PORT` — Skip SSE port (default 8079)
 - `SKIP_CONTROL_PORT` — Skip control/healthz port (default 8078)
 
@@ -148,11 +147,11 @@ Auth tokens for Slashwork groups are stored in the DB (`auth_tokens` table), not
 
 ## TypeScript
 
-Strict mode with `noUncheckedIndexedAccess: true`. Target ESNext with bundler module resolution. Path alias: `@/*` → project root.
+Strict mode with `noUncheckedIndexedAccess: true`. Target ES2017, ESNext modules with bundler resolution. Path alias: `@/*` → project root. `scripts/` and `tests/` are excluded from the app tsconfig.
 
 ## Deployment
 
-Clever Cloud via GitHub Actions (`.github/workflows/deploy.yml`). Push to `main` → build → typecheck → tests → force-push to Clever Cloud → auto-deploy. Migrations run automatically on each deploy via `instrumentation.ts`.
+Clever Cloud via GitHub Actions (`.github/workflows/deploy.yml`). Push to `main` → build → typecheck → tests → force-push to Clever Cloud → auto-deploy. Migrations run automatically on each deploy via `src/instrumentation-node.ts`.
 
 ## CSS Patterns
 
