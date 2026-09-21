@@ -37,5 +37,13 @@
   },
   "patchedDependencies": {
     "@skip-adapter/postgres@0.0.19": "patches/@skip-adapter%2Fpostgres@0.0.19.patch"
+  },
+  "overrides": {
+    "postcss": "8.5.28",
+    "nanoid": "3.3.19",
+    "sharp": "0.35.4",
+    "path-to-regexp": "0.1.13",
+    "qs": "6.16.0",
+    "body-parser": "1.20.8"
   }
 }
