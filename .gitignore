@@ -33,10 +33,12 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 # IntelliJ based IDEs
 .idea
 
-# Google service account keys
-*.json
-!package.json
-!tsconfig.json
+# Google service account keys (never commit credentials)
+skiphooks-*.json
+*service-account*.json
+
+# Local skills tooling
+skills-lock.json
 
 # Finder (MacOS) folder config
 .DS_Store
@@ -47,3 +49,6 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 *.swo
 \#*\#
 .\#*
+
+# Clever Cloud CLI link file
+.clever.json
