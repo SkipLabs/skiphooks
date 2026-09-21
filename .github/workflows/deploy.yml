@@ -32,11 +32,13 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lockb') }}
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
-      - run: bun install
+      # --ignore-scripts skips the repo's own postinstall (next build); the
+      # explicit Build step below does that once. No dependency needs scripts.
+      - run: bun install --ignore-scripts
 
       - name: Migrate test database
         run: bun run db:migrate
