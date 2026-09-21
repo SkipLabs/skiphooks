@@ -1,126 +1,146 @@
 # Skiphooks
 
-A GitHub webhook server that posts repository events to Slashwork via their GraphQL API. Supports pull requests, issues, pushes, and releases with config-driven routing to different Slashwork groups.
+A Next.js app that connects GitHub and Google Calendar to [Slashwork](https://slashwork.com):
+
+- **GitHub webhooks** → formatted posts in Slashwork groups, with DB-configured routing.
+- **AI weekly summaries** per group and a **cross-group digest** (Anthropic Claude).
+- **Group discovery** that syncs all Slashwork groups into the local database.
+- **Calendar reminders** polled from Google Calendar.
+- A **real-time admin page** (`/slashwork`) streamed from PostgreSQL via Skip Runtime.
 
 ## Supported Events
 
 | Event | Actions |
 |---|---|
 | `pull_request` | opened, closed/merged, review_requested, ready_for_review, synchronize |
+| `pull_request_review` | submitted |
 | `issues` | opened, closed, reopened, labeled, assigned |
 | `issue_comment` | created |
-| `push` | all pushes (no action filter) |
+| `push` | all pushes |
 | `release` | published, created, edited |
+| `check_suite` | completed |
+| `workflow_run` | completed |
+| `deployment_status` | all (no action field) |
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) v1.0+
+- [Bun](https://bun.sh) 1.3+
+- PostgreSQL (Clever Cloud provides `POSTGRESQL_ADDON_URI`)
+- A [Clerk](https://clerk.com) application for sign-in
+- An Anthropic API key for summaries and digests (optional)
 
 ## Setup
 
 1. Install dependencies:
 
-```sh
-bun install
-```
+   ```sh
+   bun install
+   ```
 
 2. Copy the environment template and fill in your values:
 
-```sh
-cp .env.example .env
-```
+   ```sh
+   cp .env.example .env
+   ```
 
-3. Edit `.env` with your actual credentials (see sections below).
+3. Run the migrations (they also run automatically on app start):
 
-4. Edit `config.ts` to configure event routing (see [Configuration](#configuration)).
+   ```sh
+   bun run db:migrate
+   ```
+
+4. Configure Slashwork tokens, groups and routes (see below), then start the app:
+
+   ```sh
+   bun run dev
+   ```
 
 ## Configuration
 
-Event routing is configured in `config.ts` at the project root:
+Routing lives in the database, not in a config file. Three tables drive it:
 
-```ts
-import type { SkiphooksConfig } from "./src/config.ts";
+| Table | Purpose |
+|---|---|
+| `auth_tokens` | Named Slashwork application tokens (`name`, `token`) |
+| `groups` | Named Slashwork groups: `slashwork_id` plus the `auth_token` name to post with |
+| `routes` | Webhook endpoints. Each route name becomes `POST /github/<name>` and points either at a group **or** at a `stream_id` + `auth_token` pair |
 
-const config: SkiphooksConfig = {
-  github: {
-    webhookSecret: process.env.GITHUB_WEBHOOK_SECRET!,
-  },
-  slashwork: {
-    graphqlUrl: process.env.SLASHWORK_GRAPHQL_URL!,
-  },
-  groups: {
-    myproject: {
-      id: "g_abc123",
-      authToken: process.env.SLASHWORK_AUTH_TOKEN_MYPROJECT!,
-    },
-  },
-  routes: {
-    // Group-based route — references a named group for its ID and auth token
-    myproject: { group: "myproject" },
-    // Direct stream route — specifies stream ID and auth token inline
-    releases: {
-      streamId: "g_def456",
-      authToken: process.env.SLASHWORK_AUTH_TOKEN_RELEASES!,
-    },
-  },
-};
+Manage them from the `/slashwork` admin page or with the admin API (Clerk session required):
 
-export default config;
+```sh
+# Add a token
+curl -X POST https://<host>/api/admin/tokens \
+  -H 'content-type: application/json' \
+  -d '{"name":"myproject","token":"<slashwork token>"}'
+
+# Group-based route (uses the group's id and token)
+curl -X POST https://<host>/api/admin/routes \
+  -H 'content-type: application/json' \
+  -d '{"name":"myproject","groupName":"myproject"}'
+
+# Stream-based route (explicit stream id and token name)
+curl -X POST https://<host>/api/admin/routes \
+  -H 'content-type: application/json' \
+  -d '{"name":"releases","streamId":"g_def456","authToken":"myproject"}'
 ```
 
-- **Secrets** stay in `.env` and are referenced via `process.env`.
-- **Routes** are path-based — each route name becomes a `/github/<name>` endpoint. Only configured routes are active — requests to unknown routes return 404.
-- **Groups** let multiple routes share the same auth token and target ID. Routes can reference a group by name or specify `streamId`/`authToken` directly.
+Requests to routes that do not exist return 404. `bun run db:seed` seeds the Skip Labs tokens, groups and routes from the `SLASHWORK_AUTH_TOKEN_*` variables in `.env`.
 
 ## Slashwork Configuration
 
-See the [Slashwork Developer docs](https://slashwork.com/developer) for full details.
+See the [Slashwork Developer docs](https://slashwork.com/developer).
 
 1. Create a **stream** (or use an existing one) where notifications will be posted.
-2. Create an **application** with a dedicated auth token — this goes in a `SLASHWORK_AUTH_TOKEN_*` env var.
-3. Find the **group ID** of your target stream(s) from their URLs — these go in `config.ts` groups or routes.
+2. Create an **application** with a dedicated auth token and store it in `auth_tokens`.
+3. Find the **group ID** of your target stream(s) from their URLs and store it in `groups` or as a route's `streamId`.
 4. Set `SLASHWORK_GRAPHQL_URL` to `https://<your-instance>.slashwork.com/api/graphql`.
 
 ## GitHub Webhook Setup
 
 1. Go to your repo (or org) **Settings → Webhooks → Add webhook**.
-2. **Payload URL:** `https://<your-server>/github/<route-name>` (matching a route in `config.ts`)
+2. **Payload URL:** `https://<your-server>/github/<route-name>`
 3. **Content type:** `application/json`
-4. **Secret:** Same value as your `GITHUB_WEBHOOK_SECRET` env var.
-5. **Events:** Select the events you want (Pull requests, Issues, Pushes, Releases).
+4. **Secret:** the value of `GITHUB_WEBHOOK_SECRET`.
+5. **Events:** select the events you want from the table above.
+
+## Summaries and Digest
+
+- `/summary` — pick a group and a week, generate an AI summary, publish it to the group.
+- `/digest` — configure and trigger the cross-group weekly digest. When auto-post is on, it is published every Thursday at 14:00 UTC.
+- `./summarize-group.sh <group> <week>` — CLI wrapper around `POST /api/summary`.
 
 ## Running
 
-### Local development
-
 ```sh
-bun run dev
-```
-
-### Production
-
-```sh
-bun run start
+bun run dev     # development server
+bun run build   # production build
+bun run start   # production server
 ```
 
 ## Testing
 
 ```sh
-bun test
+bun run test                            # all test files, one Bun process each
+bun test src/calendar/calendar.test.ts  # single file
+bun run typecheck
 ```
+
+Test files run in separate processes because Bun's `mock.module` is process-wide.
 
 ## Deployment
 
-Deployed to [Clever Cloud](https://clever-cloud.com) via GitHub Actions. Every push to `main` runs typecheck and tests, then deploys automatically on success.
+Deployed to [Clever Cloud](https://clever-cloud.com) via GitHub Actions. Every push to `main` runs migrations against a throwaway Postgres, builds, typechecks and tests, then force-pushes to Clever Cloud.
 
-**Required GitHub secrets** (Settings > Secrets and variables > Actions):
+**Required GitHub secrets** (Settings → Secrets and variables → Actions):
 - `CLEVER_TOKEN`
 - `CLEVER_SECRET`
+- `CLEVER_GIT_URL`
 
 ## Troubleshooting
 
-- **Signature mismatch (401):** Ensure `GITHUB_WEBHOOK_SECRET` matches exactly between GitHub and your `.env`. Check for trailing whitespace.
-- **Posts not appearing:** Verify group IDs in `config.ts` point to valid streams. Check server logs for GraphQL errors.
-- **Token issues:** Ensure your `SLASHWORK_AUTH_TOKEN_*` env vars have write permissions to the target groups.
-- **No events received:** Confirm the webhook is active in GitHub (Settings → Webhooks) and the desired events are selected.
-- **Event ignored:** Check that the route exists in `config.ts` and the action is one of the supported actions listed above.
+- **Signature mismatch (401):** `GITHUB_WEBHOOK_SECRET` must match GitHub exactly. Check for trailing whitespace.
+- **Route not found (404):** the route name in the payload URL must exist in the `routes` table.
+- **Posts not appearing:** verify the group's `slashwork_id` or the route's `stream_id`, and check server logs for GraphQL errors.
+- **Token issues:** the token stored in `auth_tokens` needs write access to the target group. `POST /api/admin/test-connection` validates a token.
+- **Event ignored:** the event and action must be in the table above; anything else is logged and dropped.
+- **Admin page not updating live:** check the Skip health endpoints on `SKIP_CONTROL_PORT` and `SKIP_STREAMING_PORT`; the watchdog restarts the process after five consecutive failures.
