@@ -7,11 +7,11 @@
       "dependencies": {
         "@anthropic-ai/sdk": "0.127.0",
         "@clerk/nextjs": "7.9.4",
-        "@skip-adapter/postgres": "0.0.23",
-        "@skipruntime/core": "0.0.23",
-        "@skipruntime/helpers": "0.0.23",
-        "@skipruntime/server": "0.0.23",
-        "@skipruntime/wasm": "0.0.23",
+        "@skip-adapter/postgres": "0.0.19",
+        "@skipruntime/core": "0.0.19",
+        "@skipruntime/helpers": "0.0.19",
+        "@skipruntime/server": "0.0.19",
+        "@skipruntime/wasm": "0.0.19",
         "@types/node": "^24.13.6",
         "@types/pg": "^8.23.1",
         "@types/react": "^19.3.0",
@@ -28,11 +28,14 @@
     },
   },
   "patchedDependencies": {
-    "@skip-adapter/postgres@0.0.23": "patches/@skip-adapter%2Fpostgres@0.0.23.patch",
+    "@skip-adapter/postgres@0.0.19": "patches/@skip-adapter%2Fpostgres@0.0.19.patch",
   },
   "overrides": {
+    "body-parser": "1.20.8",
     "nanoid": "3.3.19",
+    "path-to-regexp": "0.1.13",
     "postcss": "8.5.28",
+    "qs": "6.16.0",
     "sharp": "0.35.4",
   },
   "packages": {
@@ -122,17 +125,17 @@
 
     "@next/swc-win32-x64-msvc": ["@next/swc-win32-x64-msvc@15.5.25", "", { "os": "win32", "cpu": "x64" }, "sha512-zREeykps3ndWr9egJgvJKqVkkDuaw6Zrrg23cYBos0ygydFkAWYU4+PaPVwXzP1eAYQJe53ShSK45iDM529BOg=="],
 
-    "@skip-adapter/postgres": ["@skip-adapter/postgres@0.0.23", "", { "dependencies": { "@skipruntime/core": "0.0.23", "pg": "^8.13.1", "pg-format": "^1.0.4" } }, "sha512-NeuvZ/eN7pGuPkasLe+2SCusOdGSwNyVOOcHbQspN/GVvyBUjs+H9d/yYNqpQUjPMIf+XlVeu41tkdvhyIInHA=="],
+    "@skip-adapter/postgres": ["@skip-adapter/postgres@0.0.19", "", { "dependencies": { "@skipruntime/core": "0.0.19", "pg": "^8.13.1", "pg-format": "^1.0.4" } }, "sha512-WpMlWQ+rOxkCuIxpSrnVI3JgEkTnj6g5J+H//+eFlf5dOVO925ubfXUbxMSrVG30Rg43/m5LhJnhZCJekOcfoA=="],
 
-    "@skipruntime/core": ["@skipruntime/core@0.0.23", "", {}, "sha512-Z2redCcLTsA7h9x9dI4nCx6VAnygKf7vysERE3QRkHYIX+2356aEou+rd/gMqU2UuEOfO7ACOhpSsO8kqJDPaA=="],
+    "@skipruntime/core": ["@skipruntime/core@0.0.19", "", {}, "sha512-GNaYJ6S6vT8ZHS3ohlVLd+/pQiE0gs0qk3Z1vu2oGvowFY7GB7frPJdOZPGYQFyymJhAEPUYuEC0lIj3PqIvAg=="],
 
-    "@skipruntime/helpers": ["@skipruntime/helpers@0.0.23", "", { "dependencies": { "@skipruntime/core": "0.0.23", "eventsource": "^2.0.2", "express": "^4.22.2" } }, "sha512-5qjtvR9P1wtabAOHXzPAK2x9rLOobHOWYGRetbI0N1W0LiQT11t4JNf4AroLrd4neTux67xGXGIggX1SssFcBQ=="],
+    "@skipruntime/helpers": ["@skipruntime/helpers@0.0.19", "", { "dependencies": { "@skipruntime/core": "0.0.19", "eventsource": "^2.0.2", "express": "^4.21.1" } }, "sha512-6ELntOrWIF1o6vqyoVY2P1PSJ/7W8DzvsHje0SfGjygV7yWLS7DD5qEfTVejmJmX96QWZZv1x2NQ6EhH9h6JKQ=="],
 
-    "@skipruntime/native": ["@skipruntime/native@0.0.23", "", { "dependencies": { "@skipruntime/core": "0.0.23" } }, "sha512-t3Jb8LLat6/NTV8xnIRbAMD11aDVJ0XfFmRivDj5EOYmoMvre5RqwIqPzfi2RpWeZFdx9sIYnsaouVgLCDoBmQ=="],
+    "@skipruntime/native": ["@skipruntime/native@0.0.19", "", { "dependencies": { "@skipruntime/core": "0.0.19" } }, "sha512-ySUlfue9rFcR+RkFqB5tP8SFuOCbrzeXBIs3l8S4s+GNRaJQOgtBcU3/ehJU4PNWCq6+CoJtMBJ93ANL+ED+ng=="],
 
-    "@skipruntime/server": ["@skipruntime/server@0.0.23", "", { "dependencies": { "@skipruntime/core": "0.0.23", "express": "^4.22.2" }, "optionalDependencies": { "@skipruntime/native": "0.0.23", "@skipruntime/wasm": "0.0.23" } }, "sha512-28xz3nE/jlpPjrfwB+VUO/Lsf4v41mu0pUuEEdwAKTZv9xv3/SVU+B57iceZBa0fOLvXEA84vj8m+ax1O3Pv8A=="],
+    "@skipruntime/server": ["@skipruntime/server@0.0.19", "", { "dependencies": { "@skipruntime/core": "0.0.19", "express": "^4.21.1" }, "optionalDependencies": { "@skipruntime/native": "0.0.19", "@skipruntime/wasm": "0.0.19" } }, "sha512-GUHFR3R2f/eUwLjE/E6/+apUSe94sNcoukWymeS4e86ljNy9XPvgezgEqAv1I5aQB8cB8XuqyJJBnv8U+1e/HA=="],
 
-    "@skipruntime/wasm": ["@skipruntime/wasm@0.0.23", "", { "dependencies": { "@skipruntime/core": "0.0.23" } }, "sha512-pGWMOsKLOyMPX3vY32kt6wXMmtZWSQ/PJi2GydlP8JFgdqSRco3IbFrkVgwT9jRW0vt9VTxr3HpIuxlSSGrRUw=="],
+    "@skipruntime/wasm": ["@skipruntime/wasm@0.0.19", "", { "dependencies": { "@skipruntime/core": "0.0.19" } }, "sha512-ff6VevkxI3xf+yU283Ivtz4jNKYlNY5KObZJvrKwZGTgAaQRWrRn7VeJjQkQvqVXOW0FmTMUJthzC1FzAXVrcQ=="],
 
     "@stablelib/base64": ["@stablelib/base64@1.0.1", "", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
 
@@ -206,7 +209,7 @@
 
     "eventsource": ["eventsource@2.0.2", "", {}, "sha512-IzUmBGPR3+oUG9dUeXynyNmf91/3zUSJg1lCktzKw47OXuhco54U3r9B7O4XX+Rb1Itm9OZ2b0RkTs10bICOxA=="],
 
-    "express": ["express@4.22.3", "", { "dependencies": { "accepts": "~1.3.8", "array-flatten": "1.1.1", "body-parser": "~1.20.5", "content-disposition": "~0.5.4", "content-type": "~1.0.4", "cookie": "~0.7.1", "cookie-signature": "~1.0.6", "debug": "2.6.9", "depd": "2.0.0", "encodeurl": "~2.0.0", "escape-html": "~1.0.3", "etag": "~1.8.1", "finalhandler": "~1.3.1", "fresh": "~0.5.2", "http-errors": "~2.0.0", "merge-descriptors": "1.0.3", "methods": "~1.1.2", "on-finished": "~2.4.1", "parseurl": "~1.3.3", "path-to-regexp": "~0.1.13", "proxy-addr": "~2.0.7", "qs": "~6.16.0", "range-parser": "~1.2.1", "safe-buffer": "5.2.1", "send": "~0.19.0", "serve-static": "~1.16.2", "setprototypeof": "1.2.0", "statuses": "~2.0.1", "type-is": "~1.6.18", "utils-merge": "1.0.1", "vary": "~1.1.2" } }, "sha512-Bdcs4+3qlpVlx2NRn6fgX2Ue2/gGRaPeawebgclM0ERSCqDpA+owF1fdPwjJUTAJWMTuAaxjDf+hzb0/4eKvvw=="],
+    "express": ["express@4.22.1", "", { "dependencies": { "accepts": "~1.3.8", "array-flatten": "1.1.1", "body-parser": "~1.20.3", "content-disposition": "~0.5.4", "content-type": "~1.0.4", "cookie": "~0.7.1", "cookie-signature": "~1.0.6", "debug": "2.6.9", "depd": "2.0.0", "encodeurl": "~2.0.0", "escape-html": "~1.0.3", "etag": "~1.8.1", "finalhandler": "~1.3.1", "fresh": "~0.5.2", "http-errors": "~2.0.0", "merge-descriptors": "1.0.3", "methods": "~1.1.2", "on-finished": "~2.4.1", "parseurl": "~1.3.3", "path-to-regexp": "~0.1.12", "proxy-addr": "~2.0.7", "qs": "~6.14.0", "range-parser": "~1.2.1", "safe-buffer": "5.2.1", "send": "~0.19.0", "serve-static": "~1.16.2", "setprototypeof": "1.2.0", "statuses": "~2.0.1", "type-is": "~1.6.18", "utils-merge": "1.0.1", "vary": "~1.1.2" } }, "sha512-F2X8g9P1X7uCPZMA3MVf9wcTqlyNp7IhH5qPCI0izhaOIYXaW9L535tGA3qmjRzpH+bZczqq7hVKxTR4NWnu+g=="],
 
     "fast-sha256": ["fast-sha256@1.3.0", "", {}, "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ=="],
 
@@ -370,10 +373,20 @@
 
     "xtend": ["xtend@4.0.2", "", {}, "sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ=="],
 
+    "@skip-adapter/postgres/pg": ["pg@8.20.0", "", { "dependencies": { "pg-connection-string": "^2.12.0", "pg-pool": "^3.13.0", "pg-protocol": "^1.13.0", "pg-types": "2.2.0", "pgpass": "1.0.5" }, "optionalDependencies": { "pg-cloudflare": "^1.3.0" }, "peerDependencies": { "pg-native": ">=3.0.1" }, "optionalPeers": ["pg-native"] }, "sha512-ldhMxz2r8fl/6QkXnBD3CR9/xg694oT6DZQ2s6c/RI28OjtSOpxnPrUCGOBJ46RCUxcWdx3p6kw/xnDHjKvaRA=="],
+
     "@types/pg/@types/node": ["@types/node@25.3.1", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-hj9YIJimBCipHVfHKRMnvmHg+wfhKc0o4mTtXh9pKBjC8TLJzz0nzGmLi5UJsYAUgSvXFHgb0V2oY10DUFtImw=="],
 
     "bun-types/@types/node": ["@types/node@25.3.1", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-hj9YIJimBCipHVfHKRMnvmHg+wfhKc0o4mTtXh9pKBjC8TLJzz0nzGmLi5UJsYAUgSvXFHgb0V2oY10DUFtImw=="],
 
     "send/ms": ["ms@2.1.3", "", {}, "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="],
+
+    "@skip-adapter/postgres/pg/pg-cloudflare": ["pg-cloudflare@1.3.0", "", {}, "sha512-6lswVVSztmHiRtD6I8hw4qP/nDm1EJbKMRhf3HCYaqud7frGysPv7FYJ5noZQdhQtN2xJnimfMtvQq21pdbzyQ=="],
+
+    "@skip-adapter/postgres/pg/pg-connection-string": ["pg-connection-string@2.12.0", "", {}, "sha512-U7qg+bpswf3Cs5xLzRqbXbQl85ng0mfSV/J0nnA31MCLgvEaAo7CIhmeyrmJpOr7o+zm0rXK+hNnT5l9RHkCkQ=="],
+
+    "@skip-adapter/postgres/pg/pg-pool": ["pg-pool@3.13.0", "", { "peerDependencies": { "pg": ">=8.0" } }, "sha512-gB+R+Xud1gLFuRD/QgOIgGOBE2KCQPaPwkzBBGC9oG69pHTkhQeIuejVIk3/cnDyX39av2AxomQiyPT13WKHQA=="],
+
+    "@skip-adapter/postgres/pg/pg-protocol": ["pg-protocol@1.13.0", "", {}, "sha512-zzdvXfS6v89r6v7OcFCHfHlyG/wvry1ALxZo4LqgUoy7W9xhBDMaqOuMiF3qEV45VqsN6rdlcehHrfDtlCPc8w=="],
   }
 }
