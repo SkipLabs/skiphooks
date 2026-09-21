@@ -1,4 +1,4 @@
-diff --git a/node_modules/@skip-adapter/postgres/.bun-tag-304b71641429d988 b/.bun-tag-304b71641429d988
+diff --git a/node_modules/@skip-adapter/postgres/.bun-tag-af95eda3e80f3fff b/.bun-tag-af95eda3e80f3fff
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/dist/index.d.ts b/dist/index.d.ts
@@ -15,7 +15,7 @@ index 848c4e798b38cc6df682f8e7ba274a1546497bf0..b6e871e255ddf851588597b4391da0e4
       * @param db_config - Configuration of database to which to connect.
       * @param db_config.host - Host serving database.
 diff --git a/dist/index.js b/dist/index.js
-index 90565a5afc70414c92e41bb212495c1587d8ec63..a1584898708c626fc37afa2fc8643654556b11de 100644
+index be767d5b4134f9d584905e3d681e9721751c6354..ce1110919587b7349287a54f87b91f42f1052b10 100644
 --- a/dist/index.js
 +++ b/dist/index.js
 @@ -27,6 +27,12 @@ export class PostgresExternalService {
@@ -42,7 +42,7 @@ index 90565a5afc70414c92e41bb212495c1587d8ec63..a1584898708c626fc37afa2fc8643654
          this.client.connect().then(() => {
              const handler = () => {
                  void this.shutdown().then(() => process.exit());
-@@ -96,8 +106,8 @@ export class PostgresExternalService {
+@@ -97,8 +107,8 @@ export class PostgresExternalService {
          const setupPgNotify = async () => {
              // Reuse existing trigger/function if possible
              if (!this.open_instances.has(instance)) {
@@ -53,7 +53,7 @@ index 90565a5afc70414c92e41bb212495c1587d8ec63..a1584898708c626fc37afa2fc8643654
  CREATE OR REPLACE FUNCTION %I() RETURNS TRIGGER AS $f$
  BEGIN
    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-@@ -107,11 +117,18 @@ BEGIN
+@@ -108,11 +118,18 @@ BEGIN
    END IF;
    RETURN NULL;
  END $f$ LANGUAGE PLPGSQL;`, instance, instance, key.col, instance, key.col));
@@ -75,7 +75,7 @@ index 90565a5afc70414c92e41bb212495c1587d8ec63..a1584898708c626fc37afa2fc8643654
          };
          await initData();
 diff --git a/src/index.ts b/src/index.ts
-index f343b38302446fc2c5f9172f21e31fe68f0390b0..a83dbe705dcc7c0d58ff9d17dc7c02b4676f6f84 100644
+index 01f42175ae3e2cc4bbc6022b92fdc0bbb4ddf1fe..ae00538a20dfe7458fc127902b92b1d590ebf021 100644
 --- a/src/index.ts
 +++ b/src/index.ts
 @@ -37,6 +37,14 @@ export class PostgresExternalService implements ExternalService {
@@ -107,7 +107,7 @@ index f343b38302446fc2c5f9172f21e31fe68f0390b0..a83dbe705dcc7c0d58ff9d17dc7c02b4
      this.client.connect().then(
        () => {
          const handler = () => {
-@@ -133,10 +148,10 @@ export class PostgresExternalService implements ExternalService {
+@@ -134,10 +149,10 @@ export class PostgresExternalService implements ExternalService {
      const setupPgNotify = async () => {
        // Reuse existing trigger/function if possible
        if (!this.open_instances.has(instance)) {
@@ -122,7 +122,7 @@ index f343b38302446fc2c5f9172f21e31fe68f0390b0..a83dbe705dcc7c0d58ff9d17dc7c02b4
  CREATE OR REPLACE FUNCTION %I() RETURNS TRIGGER AS $f$
  BEGIN
    IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
-@@ -146,25 +161,36 @@ BEGIN
+@@ -147,25 +162,36 @@ BEGIN
    END IF;
    RETURN NULL;
  END $f$ LANGUAGE PLPGSQL;`,
